@@ -17,7 +17,7 @@ export default defineType({
       title: 'Brand',
       type: 'reference',
       to: [{ type: 'brand' }],
-      description: 'Which brand this order belongs to (HEIM or Kinder). Used to filter orders in the back office.',
+      description: 'Optional. Primary or first brand if cart was from one store; leave empty for mixed HEIM + Kinder orders (same bank).',
     }),
     defineField({
       name: 'customer',
@@ -94,7 +94,7 @@ export default defineType({
               const { title, quantity, price } = selection
               return {
                 title,
-                subtitle: `Qty: ${quantity} × $${price}`,
+                subtitle: `Qty: ${quantity} × ₦${price}`,
               }
             },
           },
@@ -113,13 +113,6 @@ export default defineType({
       title: 'Shipping Cost',
       type: 'number',
       validation: (Rule) => Rule.required().min(0),
-      initialValue: 0,
-    }),
-    defineField({
-      name: 'tax',
-      title: 'Tax',
-      type: 'number',
-      validation: (Rule) => Rule.min(0),
       initialValue: 0,
     }),
     defineField({
@@ -146,19 +139,6 @@ export default defineType({
       initialValue: 'pending',
     }),
     defineField({
-      name: 'paymentMethod',
-      title: 'Payment Method',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Bank Transfer', value: 'bank_transfer' },
-          { title: 'Pickup - Cash', value: 'pickup_cash' },
-          { title: 'Delivery - Cash on Delivery', value: 'cash_on_delivery' },
-        ],
-      },
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: 'paymentStatus',
       title: 'Payment Status',
       type: 'string',
@@ -174,44 +154,36 @@ export default defineType({
     }),
     defineField({
       name: 'shippingMethod',
-      title: 'Shipping Method',
+      title: 'Delivery option',
       type: 'string',
+      description: 'From checkout: store_pickup | abuja | interstate. Store pickup = no fee; Abuja = weekdays ~₦5,000 24hrs; Interstate = Saturdays by zone.',
       options: {
         list: [
-          { title: 'Standard Delivery', value: 'standard' },
-          { title: 'Express Delivery', value: 'express' },
-          { title: 'Pickup in Person', value: 'pickup' },
+          { title: 'Store pickup', value: 'store_pickup' },
+          { title: 'Abuja delivery', value: 'abuja' },
+          { title: 'Interstate delivery', value: 'interstate' },
         ],
       },
       validation: (Rule) => Rule.required(),
+      initialValue: 'store_pickup',
     }),
     defineField({
       name: 'shippingAddress',
       title: 'Shipping Address',
       type: 'object',
       fields: [
-        { name: 'fullName', type: 'string', title: 'Full Name' },
-        { name: 'address1', type: 'string', title: 'Address Line 1' },
-        { name: 'address2', type: 'string', title: 'Address Line 2' },
-        { name: 'city', type: 'string', title: 'City' },
-        { name: 'state', type: 'string', title: 'State/Province' },
-        { name: 'postalCode', type: 'string', title: 'Postal Code' },
-        { name: 'country', type: 'string', title: 'Country' },
+        { name: 'fullName', type: 'string', title: 'Name' },
+        { name: 'address1', type: 'string', title: 'Address' },
       ],
     }),
     defineField({
-      name: 'billingAddress',
-      title: 'Billing Address',
-      type: 'object',
-      fields: [
-        { name: 'fullName', type: 'string', title: 'Full Name' },
-        { name: 'address1', type: 'string', title: 'Address Line 1' },
-        { name: 'address2', type: 'string', title: 'Address Line 2' },
-        { name: 'city', type: 'string', title: 'City' },
-        { name: 'state', type: 'string', title: 'State/Province' },
-        { name: 'postalCode', type: 'string', title: 'Postal Code' },
-        { name: 'country', type: 'string', title: 'Country' },
-      ],
+      name: 'paymentReceipt',
+      title: 'Payment Receipt',
+      type: 'file',
+      description: 'Uploaded bank transfer receipt (image or PDF)',
+      options: {
+        accept: 'image/*,.pdf',
+      },
     }),
     defineField({
       name: 'notes',
@@ -224,11 +196,6 @@ export default defineType({
       title: 'Admin Notes',
       type: 'text',
       description: 'Internal notes (not visible to customer)',
-    }),
-    defineField({
-      name: 'trackingNumber',
-      title: 'Tracking Number',
-      type: 'string',
     }),
     defineField({
       name: 'createdAt',
@@ -255,7 +222,7 @@ export default defineType({
       const { orderNumber, customerName, total, status, brandName } = selection
       return {
         title: `Order #${orderNumber}`,
-        subtitle: [brandName, customerName, `$${total}`, status].filter(Boolean).join(' · '),
+        subtitle: [brandName, customerName, `₦${total}`, status].filter(Boolean).join(' · '),
       }
     },
   },

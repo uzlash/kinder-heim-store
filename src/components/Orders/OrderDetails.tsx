@@ -31,12 +31,12 @@ const OrderDetails = ({ orderItem }: any) => {
       <div className="items-center justify-between border-t border-gray-3 py-5 px-7.5 hidden md:flex">
         <div className="min-w-[111px]">
           <p className="text-custom-sm text-red">
-            #{orderItem.orderId.slice(-8)}
+            #{orderItem.orderNumber?.slice(-8) || orderItem.orderId?.slice(-8) || orderItem._id?.slice(-8)}
           </p>
         </div>
         <div className="min-w-[175px]">
           <p className="text-custom-sm text-dark">
-            {orderItem.createdAt}
+            {orderItem.createdAt ? new Date(orderItem.createdAt).toLocaleDateString() : "—"}
           </p>
         </div>
 
@@ -62,13 +62,27 @@ const OrderDetails = ({ orderItem }: any) => {
 
         <div className="min-w-[113px]">
           <p className="text-custom-sm text-dark">
-            {orderItem.total}
+            {typeof orderItem.total === "number" ? `₦${orderItem.total?.toLocaleString()}` : orderItem.total}
           </p>
         </div>
       </div>
-      <div className="px-7.5 w-full">
-        <p className="font-bold">Shipping Address:</p>{" "}
-        <p>942 Aspen Road Encino, CA 91316</p>
+      <div className="px-7.5 w-full space-y-4 pt-4">
+        {orderItem.shippingAddress && (
+          <div>
+            <p className="font-bold text-dark">Shipping Address</p>
+            <p className="text-dark-4">
+              {[orderItem.shippingAddress.fullName, orderItem.shippingAddress.address1]
+                .filter(Boolean)
+                .join(" · ") || "—"}
+            </p>
+          </div>
+        )}
+        {orderItem.notes && (
+          <div>
+            <p className="font-bold text-dark">Order notes</p>
+            <p className="text-dark-4 whitespace-pre-wrap">{orderItem.notes}</p>
+          </div>
+        )}
       </div>
     </>
   );

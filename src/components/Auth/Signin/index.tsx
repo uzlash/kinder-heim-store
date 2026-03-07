@@ -10,12 +10,14 @@ import toast from "react-hot-toast";
 const Signin = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -25,6 +27,7 @@ const Signin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const result = await signIn("credentials", {
@@ -34,14 +37,20 @@ const Signin = () => {
       });
 
       if (result?.error) {
-        toast.error(result.error);
+        const message = result.error === "CredentialsSignin"
+          ? "Invalid email or password. Please try again."
+          : result.error;
+        setError(message);
+        toast.error(message);
       } else {
         toast.success("Signed in successfully!");
         router.push("/my-account");
         router.refresh();
       }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
+    } catch (err) {
+      const message = "An error occurred. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -61,6 +70,40 @@ const Signin = () => {
             </div>
 
             <div>
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-6 flex items-start gap-3 rounded-lg border border-red-light-4 bg-red-light-6 px-4 py-3 text-red text-custom-sm"
+                >
+                  <svg
+                    className="mt-0.5 flex-shrink-0"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <p className="flex-1">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="flex-shrink-0 rounded p-1 hover:bg-red-light-4 focus:outline-none focus:ring-2 focus:ring-red"
+                    aria-label="Dismiss error"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                      <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="email" className="block mb-2.5">

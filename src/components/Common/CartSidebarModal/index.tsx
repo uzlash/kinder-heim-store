@@ -11,13 +11,19 @@ import SingleItem from "./SingleItem";
 import Link from "next/link";
 import EmptyCart from "./EmptyCart";
 import { formatPrice } from "@/lib/formatPrice";
+import { useBrand } from "@/app/context/BrandContext";
 
 const CartSidebarModal = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isCartModalOpen, closeCartModal } = useCartModalContext();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
+  const { brand } = useBrand();
 
   const totalPrice = useSelector(selectTotalPrice);
+
+  const hasProductOfMonth = cartItems.some((item) => item.productOfMonth);
+  const qualifiesFreeAbuja = hasProductOfMonth && cartItems.length >= 3;
+  const shopHref = brand ? `/${brand}/shop` : "/shop";
 
   const handleClearCart = () => {
     dispatch(removeAllItemsFromCart());
@@ -89,9 +95,37 @@ const CartSidebarModal = () => {
             )}
           </div>
 
+          {cartItems.length > 0 && (
+            <div
+              className={`mb-4 p-3 rounded-lg border ${
+                qualifiesFreeAbuja
+                  ? "bg-green-light-6 border-green-light-4"
+                  : "bg-blue-light-5 border-blue-light-3"
+              }`}
+            >
+              {qualifiesFreeAbuja ? (
+                <p className="text-custom-sm text-dark font-medium">
+                  You&apos;ve unlocked free Abuja delivery at checkout.
+                </p>
+              ) : (
+                <>
+                  <p className="text-custom-sm text-dark font-medium mb-2">
+                    Add a Product of the Month + 2 other items for free delivery within Abuja.
+                  </p>
+                  <Link
+                    onClick={() => closeCartModal()}
+                    href={shopHref}
+                    className="text-custom-sm font-semibold text-blue hover:text-blue-dark hover:underline"
+                  >
+                    Shop now →
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="h-[66vh] overflow-y-auto no-scrollbar">
             <div className="flex flex-col gap-6">
-              {/* <!-- cart item --> */}
               {cartItems.length > 0 ? (
                 cartItems.map((item, key) => (
                   <SingleItem key={key} item={item} />

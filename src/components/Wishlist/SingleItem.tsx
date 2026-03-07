@@ -3,24 +3,20 @@ import { AppDispatch } from "@/redux/store";
 import { useDispatch } from "react-redux";
 
 import { removeItemFromWishlist } from "@/redux/features/wishlist-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { useAddToCartModal } from "@/app/context/AddToCartModalContext";
 import { formatPrice } from "@/lib/formatPrice";
 import Image from "next/image";
 
 const SingleItem = ({ item }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { openWithProduct } = useAddToCartModal();
 
   const handleRemoveFromWishlist = () => {
     dispatch(removeItemFromWishlist(item.id));
   };
 
   const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
+    openWithProduct(item);
   };
 
   return (

@@ -86,10 +86,12 @@ export default defineType({
     }),
   ],
   preview: {
-    select: { title: 'title' },
-    prepare() {
+    select: {
+      brandName: 'brand.name',
+    },
+    prepare({ brandName }) {
       return {
-        title: 'Homepage',
+        title: brandName || 'Homepage',
         subtitle: 'Hero, promo & countdown',
       }
     },

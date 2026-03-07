@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 
 interface ColorsDropdownProps {
-  colors: string[];
+  colors: { name: string; value: string }[];
   selectedColor?: string | null;
   onChange: (color: string) => void;
 }
@@ -50,7 +50,7 @@ const ColorsDropdwon = ({ colors, selectedColor, onChange }: ColorsDropdownProps
         }`}
       >
         {colors.map((color, key) => {
-          const id = `color-${key}-${color.replace(/\s+/g, "-")}`;
+          const id = `color-${key}-${color.name.replace(/\s+/g, "-")}`;
           return (
             <label
               key={key}
@@ -59,7 +59,7 @@ const ColorsDropdwon = ({ colors, selectedColor, onChange }: ColorsDropdownProps
             >
               <div
                 className={`relative flex-shrink-0 flex items-center justify-center w-5.5 h-5.5 rounded-full ${
-                  selectedColor === color ? "ring-1 ring-gray-5 ring-offset-1" : ""
+                  selectedColor === color.name ? "ring-1 ring-gray-5 ring-offset-1" : ""
                 }`}
               >
                 <input
@@ -67,15 +67,15 @@ const ColorsDropdwon = ({ colors, selectedColor, onChange }: ColorsDropdownProps
                   name="color"
                   id={id}
                   className="sr-only"
-                  checked={selectedColor === color}
-                  onChange={() => onChange(color)}
+                  checked={selectedColor === color.name}
+                  onChange={() => onChange(color.name)}
                 />
                 <span
                   className="block w-3 h-3 rounded-full border border-gray-3"
-                  style={{ backgroundColor: color }}
+                  style={{ backgroundColor: color.value || "#ccc" }}
                 />
               </div>
-              <span className="text-custom-sm text-dark capitalize">{color}</span>
+              <span className="text-custom-sm text-dark capitalize">{color.name}</span>
             </label>
           );
         })}

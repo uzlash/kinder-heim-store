@@ -15,7 +15,6 @@ export type Product = {
   colorVariants?: Array<{ color: { name: string; value: string }; sizes: string[] }>;
   productOfMonth?: boolean;
   policy?: string;
-  whatsappNumber?: string;
   deliveryInfo?: string;
   /** Available quantity (from Sanity inventory). Used to cap cart quantity. */
   stock?: number;

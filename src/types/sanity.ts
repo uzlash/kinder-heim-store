@@ -24,7 +24,6 @@ export interface SanityProduct {
   }>
   productOfMonth?: boolean
   policy?: string
-  whatsappNumber?: string
   deliveryInfo?: string
   tags?: string[]
   featured?: boolean

@@ -2,8 +2,8 @@
 import React from "react";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
+import { useAddToCartModal } from "@/app/context/AddToCartModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { formatPrice } from "@/lib/formatPrice";
 import { useDispatch } from "react-redux";
@@ -13,18 +13,13 @@ import Image from "next/image";
 
 const SingleGridItem = ({ item, brand }: { item: Product; brand?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { openWithProduct } = useAddToCartModal();
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
   const isWishlisted = wishlistItems.some((i) => i.id === item.id);
   const brandPrefix = brand ? `/${brand}` : "";
 
-  // add to cart
   const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
+    openWithProduct(item);
   };
 
   const handleItemToWishList = (e: React.MouseEvent) => {
@@ -116,43 +111,6 @@ const SingleGridItem = ({ item, brand }: { item: Product; brand?: string }) => {
             </svg>
           </button>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2.5 mb-2">
-        <div className="flex items-center gap-1">
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={15}
-            height={15}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={15}
-            height={15}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={15}
-            height={15}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={15}
-            height={15}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={15}
-            height={15}
-          />
-        </div>
-
-        <p className="text-custom-sm">({item.reviews})</p>
       </div>
 
       {item.productOfMonth && (

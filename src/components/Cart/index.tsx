@@ -9,10 +9,16 @@ import { removeAllItemsFromCart } from "@/redux/features/cart-slice";
 import SingleItem from "./SingleItem";
 import Breadcrumb from "../Common/Breadcrumb";
 import Link from "next/link";
+import { useBrand } from "@/app/context/BrandContext";
 
 const Cart = () => {
   const dispatch = useDispatch<AppDispatch>();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
+  const { brand } = useBrand();
+
+  const hasProductOfMonth = cartItems.some((item) => item.productOfMonth);
+  const qualifiesFreeAbuja = hasProductOfMonth && cartItems.length >= 3;
+  const shopHref = brand ? `/${brand}/shop` : "/shop";
 
   return (
     <>
@@ -30,6 +36,32 @@ const Cart = () => {
                 Clear Shopping Cart
               </button>
             </div>
+
+            {cartItems.length > 0 && (
+              <div
+                className={`rounded-lg p-4 mb-7.5 border ${
+                  qualifiesFreeAbuja ? "bg-green-light-6 border-green-light-4" : "bg-blue-light-5 border-blue-light-3"
+                }`}
+              >
+                {qualifiesFreeAbuja ? (
+                  <p className="text-custom-sm font-medium text-dark">
+                    You&apos;ve unlocked free Abuja delivery at checkout.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-custom-sm font-medium text-dark mb-2">
+                      Add a Product of the Month + 2 other items for free delivery within Abuja.
+                    </p>
+                    <Link
+                      href={shopHref}
+                      className="text-custom-sm font-semibold text-blue hover:text-blue-dark hover:underline"
+                    >
+                      Shop now →
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
 
             <div className="bg-white rounded-[10px] shadow-1">
               <div className="w-full overflow-x-auto">

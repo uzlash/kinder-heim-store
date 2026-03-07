@@ -3,8 +3,8 @@ import React from "react";
 import Image from "next/image";
 import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
+import { useAddToCartModal } from "@/app/context/AddToCartModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
-import { addItemToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
 import { formatPrice } from "@/lib/formatPrice";
@@ -14,24 +14,18 @@ import Link from "next/link";
 
 const ProductItem = ({ item, brand, disableQuickView = false }: { item: Product; brand?: string; disableQuickView?: boolean }) => {
   const { openModal } = useModalContext();
+  const { openWithProduct } = useAddToCartModal();
   const dispatch = useDispatch<AppDispatch>();
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
   const isWishlisted = wishlistItems.some((i) => i.id === item.id);
   const brandPrefix = brand ? `/${brand}` : "";
 
-  // update the QuickView state
   const handleQuickViewUpdate = () => {
     dispatch(updateQuickView({ ...item }));
   };
 
-  // add to cart
   const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
+    openWithProduct(item);
   };
 
   const handleItemToWishList = () => {
@@ -159,43 +153,6 @@ const ProductItem = ({ item, brand, disableQuickView = false }: { item: Product;
             </svg>
           </button>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2.5 mb-2">
-        <div className="flex items-center gap-1">
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-        </div>
-
-        <p className="text-custom-sm">({item.reviews})</p>
       </div>
 
       <h3

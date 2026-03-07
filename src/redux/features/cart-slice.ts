@@ -19,16 +19,25 @@ export type CartItem = {
     thumbnails: string[];
     previews: string[];
   };
+  /** Selected color name (for order and Sanity). */
+  color?: string;
+  /** Selected size (for order and Sanity). */
+  size?: string;
 };
 
 const initialState: InitialState = {
   items: [],
 };
 
-/** Stable key for "same product": prefer slug, fallback to id */
+/** Same line = same product + same color + same size (so different color/size = separate line) */
 function sameProduct(a: CartItem, payload: CartItem): boolean {
-  if (a.slug && payload.slug && a.slug === payload.slug) return true;
-  return a.id === payload.id;
+  const sameId = (a.slug && payload.slug && a.slug === payload.slug) || a.id === payload.id;
+  if (!sameId) return false;
+  const aColor = a.color ?? "";
+  const pColor = payload.color ?? "";
+  const aSize = a.size ?? "";
+  const pSize = payload.size ?? "";
+  return aColor === pColor && aSize === pSize;
 }
 
 export const cart = createSlice({
@@ -36,7 +45,7 @@ export const cart = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth, stock } =
+      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth, stock, color, size } =
         action.payload;
       const existingItem = state.items.find((item) => sameProduct(item, action.payload));
       const maxQty = typeof stock === "number" ? Math.max(0, stock) : undefined;
@@ -48,7 +57,7 @@ export const cart = createSlice({
       } else {
         const qty = maxQty != null ? Math.min(quantity, maxQty) : quantity;
         state.items.push({
-          id: slug ?? id,
+          id,
           slug,
           title,
           price,
@@ -57,6 +66,8 @@ export const cart = createSlice({
           stock: maxQty,
           productOfMonth,
           imgs,
+          color,
+          size,
         });
       }
     },

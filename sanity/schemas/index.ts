@@ -7,9 +7,11 @@ import siteSettings from './siteSettings'
 import testimonial from './testimonial'
 import homePage from './homePage'
 import brand from './brand'
+import color from './color'
 
 export const schemaTypes = [
   brand,
+  color,
   product,
   category,
   order,

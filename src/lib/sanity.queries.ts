@@ -31,8 +31,7 @@ export async function getAllProducts(brandSlug?: string) {
       },
       sku,
       inventory,
-      colors,
-      sizes,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       tags,
       featured,
       bestSeller,
@@ -70,12 +69,9 @@ export async function getProductBySlug(slug: string, brandSlug?: string) {
       },
       sku,
       inventory,
-      colors,
-      sizes,
-      colorVariants,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       productOfMonth,
       policy,
-      whatsappNumber,
       deliveryInfo,
       tags,
       featured,
@@ -108,6 +104,7 @@ export async function getFeaturedProducts(limit = 8, brandSlug?: string) {
       comparePrice,
       images,
       inventory,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       productOfMonth,
       reviews,
       rating,
@@ -135,6 +132,7 @@ export async function getBestSellerProducts(limit = 8, brandSlug?: string) {
       comparePrice,
       images,
       inventory,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       productOfMonth,
       reviews,
       rating,
@@ -162,6 +160,7 @@ export async function getNewArrivalProducts(limit = 8, brandSlug?: string) {
       comparePrice,
       images,
       inventory,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       productOfMonth,
       reviews,
       rating,
@@ -228,26 +227,44 @@ export async function getAllCategories(brandSlug?: string) {
   )
 }
 
-export async function getAllColors(brandSlug?: string) {
+/** Returns unique colors (name + hex) used by products, for shop filter. */
+export async function getAllColors(brandSlug?: string): Promise<{ name: string; value: string }[]> {
   const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
   const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
   const params = brandSlugs?.length ? { brandSlugs } : {}
 
-  return client.fetch(
-    `array::unique(*[_type == "product" && status == "active"${brandFilter} && defined(colors)].colors[].name)`,
+  const products = await client.fetch<{ colorVariants?: { name: string; value: string }[] }[]>(
+    `*[_type == "product" && status == "active"${brandFilter} && defined(colorVariants) && count(colorVariants) > 0]{
+      "colorVariants": colorVariants[].color->{ name, value }
+    }`,
     params,
   )
+  const seen = new Set<string>()
+  const result: { name: string; value: string }[] = []
+  for (const p of products) {
+    for (const c of p.colorVariants ?? []) {
+      if (c?.name && !seen.has(c.name)) {
+        seen.add(c.name)
+        result.push({ name: c.name, value: c.value ?? '' })
+      }
+    }
+  }
+  return result
 }
 
-export async function getAllSizes(brandSlug?: string) {
+export async function getAllSizes(brandSlug?: string): Promise<string[]> {
   const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
   const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
   const params = brandSlugs?.length ? { brandSlugs } : {}
 
-  return client.fetch(
-    `array::unique(*[_type == "product" && status == "active"${brandFilter} && defined(sizes)].sizes[])`,
+  const products = await client.fetch<{ sizes: string[] }[]>(
+    `*[_type == "product" && status == "active"${brandFilter} && defined(colorVariants) && count(colorVariants) > 0]{
+      "sizes": array::unique(colorVariants[].sizes[])
+    }`,
     params,
   )
+  const all = products.flatMap((p) => p.sizes ?? [])
+  return [...new Set(all)]
 }
 
 /** Min and max price across active products (optionally for a brand). Used for price filter bounds. */
@@ -349,12 +366,12 @@ export async function getFilteredProducts(filters: {
   }
 
   if (color) {
-    baseQuery += ` && $color in colors[].name`;
+    baseQuery += ` && $color in colorVariants[].color->name`;
     params.color = color;
   }
 
   if (size) {
-    baseQuery += ` && $size in sizes`;
+    baseQuery += ` && $size in colorVariants[].sizes[]`;
     params.size = size;
   }
 
@@ -376,8 +393,7 @@ export async function getFilteredProducts(filters: {
       },
       sku,
       inventory,
-      colors,
-      sizes,
+      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
       productOfMonth,
       tags,
       featured,
@@ -407,6 +423,9 @@ export async function getCustomerOrders(email: string) {
       status,
       paymentStatus,
       createdAt,
+      notes,
+      shippingAddress,
+      shippingMethod,
       items[] {
         productName,
         quantity,
@@ -474,8 +493,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -496,8 +514,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -518,8 +535,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -540,8 +556,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -562,8 +577,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -584,8 +598,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,
@@ -606,8 +619,7 @@ export async function getHomePageHero(brandSlug?: string) {
         category->{ _id, name, "slug": slug.current },
         sku,
         inventory,
-        colors,
-        sizes,
+        "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
         productOfMonth,
         tags,
         featured,

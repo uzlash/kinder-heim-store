@@ -91,50 +91,11 @@ export default defineType({
       initialValue: 0,
     }),
     defineField({
-      name: 'colors',
-      title: 'Available Colors',
-      type: 'array',
-      of: [
-        {
-          type: 'object',
-          fields: [
-            {
-              name: 'name',
-              title: 'Color Name',
-              type: 'string',
-            },
-            {
-              name: 'value',
-              title: 'Color Code',
-              type: 'string',
-              description: 'Hex color code (e.g., #000000)',
-            },
-          ],
-        },
-      ],
-    }),
-    defineField({
-      name: 'sizes',
-      title: 'Available Sizes (global fallback)',
-      type: 'array',
-      description: 'Used when colorVariants is empty. Otherwise sizes come from each color variant.',
-      of: [{ type: 'string' }],
-      options: {
-        list: [
-          { title: 'XS', value: 'XS' },
-          { title: 'S', value: 'S' },
-          { title: 'M', value: 'M' },
-          { title: 'L', value: 'L' },
-          { title: 'XL', value: 'XL' },
-          { title: 'XXL', value: 'XXL' },
-        ],
-      },
-    }),
-    defineField({
       name: 'colorVariants',
-      title: 'Sizes per color',
+      title: 'Colors & sizes',
       type: 'array',
-      description: 'When set, each color shows its own available sizes when clicked. Leave empty to use Colors + Sizes globally.',
+      description: 'Add each color and select which sizes are available for that color. For a color with all sizes, select every size option.',
+      validation: (Rule) => Rule.required().min(1),
       of: [
         {
           type: 'object',
@@ -142,11 +103,9 @@ export default defineType({
             {
               name: 'color',
               title: 'Color',
-              type: 'object',
-              fields: [
-                { name: 'name', title: 'Color name', type: 'string' },
-                { name: 'value', title: 'Hex (e.g. #000)', type: 'string' },
-              ],
+              type: 'reference',
+              to: [{ type: 'color' }],
+              validation: (Rule) => Rule.required(),
             },
             {
               name: 'sizes',
@@ -165,6 +124,19 @@ export default defineType({
               },
             },
           ],
+          preview: {
+            select: {
+              colorName: 'color.name',
+              sizes: 'sizes',
+            },
+            prepare({ colorName, sizes }: { colorName?: string; sizes?: string[] }) {
+              const sizesStr = Array.isArray(sizes) && sizes.length > 0 ? sizes.join(', ') : 'No sizes';
+              return {
+                title: colorName || 'Select color',
+                subtitle: sizesStr,
+              };
+            },
+          },
         },
       ],
     }),
@@ -174,12 +146,6 @@ export default defineType({
       type: 'text',
       rows: 4,
       description: 'Return / shipping policy or other policy text for this product.',
-    }),
-    defineField({
-      name: 'whatsappNumber',
-      title: 'WhatsApp number',
-      type: 'string',
-      description: 'E.g. 2348012345678 (country code, no +). Used for Contact / Chat link.',
     }),
     defineField({
       name: 'deliveryInfo',
@@ -261,7 +227,7 @@ export default defineType({
       const { title, media, price, inventory } = selection
       return {
         title,
-        subtitle: `$${price} - Stock: ${inventory}`,
+        subtitle: `₦${price} - Stock: ${inventory}`,
         media,
       }
     },

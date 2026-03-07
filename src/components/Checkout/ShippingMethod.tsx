@@ -1,105 +1,151 @@
-import React, { useState } from "react";
-import Image from "next/image";
+"use client";
+
+import React from "react";
+import { formatPrice } from "@/lib/formatPrice";
+
+export type DeliveryOption = "store_pickup" | "abuja" | "interstate";
+
+export const DELIVERY_FEES: Record<DeliveryOption, number> = {
+  store_pickup: 0,
+  abuja: 5000,
+  interstate: 7000, // default zone; actual fee from selected zone
+};
+
+export const INTERSTATE_ZONES: { value: string; label: string; fee: number }[] = [
+  { value: "northwest", label: "Northwest", fee: 7000 },
+  { value: "northeast", label: "Northeast", fee: 7000 },
+  { value: "northcentral", label: "North Central", fee: 7000 },
+  { value: "southwest", label: "Southwest", fee: 7000 },
+  { value: "southeast", label: "Southeast", fee: 7000 },
+  { value: "southsouth", label: "South South", fee: 7000 },
+  { value: "other", label: "Other (contact for fee)", fee: 0 },
+];
 
 interface ShippingMethodProps {
-  selected: string;
-  onChange: (value: string) => void;
+  selected: DeliveryOption;
+  interstateZone: string;
+  onChange: (value: DeliveryOption) => void;
+  onInterstateZoneChange?: (value: string) => void;
 }
 
-const ShippingMethod = ({ selected, onChange }: ShippingMethodProps) => {
+const ShippingMethod = ({
+  selected,
+  interstateZone,
+  onChange,
+  onInterstateZoneChange,
+}: ShippingMethodProps) => {
+  const interstateFee =
+    selected === "interstate"
+      ? INTERSTATE_ZONES.find((z) => z.value === interstateZone)?.fee ?? 7000
+      : 0;
+
   return (
     <div className="bg-white shadow-1 rounded-[10px] mt-7.5">
       <div className="border-b border-gray-3 py-5 px-4 sm:px-8.5">
-        <h3 className="font-medium text-xl text-dark">Shipping Method</h3>
+        <h3 className="font-medium text-xl text-dark">Delivery option</h3>
       </div>
 
       <div className="p-4 sm:p-8.5">
         <div className="flex flex-col gap-4">
           <label
-            htmlFor="standard"
+            htmlFor="store_pickup"
             className="flex cursor-pointer select-none items-center gap-3.5"
           >
             <div className="relative">
               <input
                 type="radio"
                 name="shippingMethod"
-                id="standard"
+                id="store_pickup"
                 className="sr-only"
-                checked={selected === "standard"}
-                onChange={() => onChange("standard")}
+                checked={selected === "store_pickup"}
+                onChange={() => onChange("store_pickup")}
               />
               <div
                 className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                  selected === "standard"
+                  selected === "store_pickup"
                     ? "border-4 border-blue"
                     : "border border-gray-4"
                 }`}
-              ></div>
-            </div>
-            Standard Shipping (Free)
-          </label>
-
-          <label
-            htmlFor="express"
-            className="flex cursor-pointer select-none items-center gap-3.5"
-          >
-            <div className="relative">
-              <input
-                type="radio"
-                name="shippingMethod"
-                id="express"
-                className="sr-only"
-                checked={selected === "express"}
-                onChange={() => onChange("express")}
               />
-              <div
-                className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                  selected === "express"
-                    ? "border-4 border-blue"
-                    : "border border-gray-4"
-                }`}
-              ></div>
             </div>
-
-            <div className="rounded-md border-[0.5px] py-3.5 px-5 ease-out duration-200 hover:bg-gray-2 hover:border-transparent hover:shadow-none">
-              <div className="flex items-center">
-                <div className="border-l border-gray-4 pl-4">
-                  <p className="font-semibold text-dark">$15.00</p>
-                  <p className="text-custom-xs">Express Shipping</p>
-                </div>
-              </div>
+            <div className="rounded-md border border-gray-4 py-3.5 px-5 flex-1">
+              <p className="font-semibold text-dark">Store pickup</p>
+              <p className="text-custom-sm text-dark-4">No delivery fees</p>
             </div>
           </label>
 
           <label
-            htmlFor="pickup"
+            htmlFor="abuja"
             className="flex cursor-pointer select-none items-center gap-3.5"
           >
             <div className="relative">
               <input
                 type="radio"
                 name="shippingMethod"
-                id="pickup"
+                id="abuja"
                 className="sr-only"
-                checked={selected === "pickup"}
-                onChange={() => onChange("pickup")}
+                checked={selected === "abuja"}
+                onChange={() => onChange("abuja")}
               />
               <div
                 className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                  selected === "pickup"
+                  selected === "abuja" ? "border-4 border-blue" : "border border-gray-4"
+                }`}
+              />
+            </div>
+            <div className="rounded-md border border-gray-4 py-3.5 px-5 flex-1">
+              <p className="font-semibold text-dark">
+                Delivery within Abuja (weekdays)
+              </p>
+              <p className="text-custom-sm text-dark-4">
+                ~₦{formatPrice(5000)} · 24hrs max
+              </p>
+            </div>
+          </label>
+
+          <label
+            htmlFor="interstate"
+            className="flex cursor-pointer select-none items-start gap-3.5"
+          >
+            <div className="relative mt-1">
+              <input
+                type="radio"
+                name="shippingMethod"
+                id="interstate"
+                className="sr-only"
+                checked={selected === "interstate"}
+                onChange={() => onChange("interstate")}
+              />
+              <div
+                className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                  selected === "interstate"
                     ? "border-4 border-blue"
                     : "border border-gray-4"
                 }`}
-              ></div>
+              />
             </div>
-
-            <div className="rounded-md border-[0.5px] py-3.5 px-5 ease-out duration-200 hover:bg-gray-2 hover:border-transparent hover:shadow-none">
-              <div className="flex items-center">
-                <div className="border-l border-gray-4 pl-4">
-                  <p className="font-semibold text-dark">Free</p>
-                  <p className="text-custom-xs">Pickup in Person</p>
-                </div>
-              </div>
+            <div className="rounded-md border border-gray-4 py-3.5 px-5 flex-1">
+              <p className="font-semibold text-dark">
+                Delivery Interstate (Saturdays)
+              </p>
+              <p className="text-custom-sm text-dark-4 mb-2">
+                Each zone has its fees (e.g. Northwest ₦7,000)
+              </p>
+              {selected === "interstate" && onInterstateZoneChange && (
+                <select
+                  value={interstateZone}
+                  onChange={(e) => onInterstateZoneChange(e.target.value)}
+                  className="mt-2 w-full rounded-md border border-gray-3 bg-gray-1 text-dark py-2 px-3 text-custom-sm outline-none focus:ring-2 focus:ring-blue/20"
+                  aria-label="Select zone"
+                >
+                  {INTERSTATE_ZONES.map((z) => (
+                    <option key={z.value} value={z.value}>
+                      {z.label}
+                      {z.fee > 0 ? ` — ₦${formatPrice(z.fee)}` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </label>
         </div>

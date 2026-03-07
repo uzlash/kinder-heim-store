@@ -3,7 +3,7 @@ import React from "react";
 import { Product } from "@/types/product";
 import { useDispatch } from "react-redux";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { useAddToCartModal } from "@/app/context/AddToCartModalContext";
 import Image from "next/image";
 import Link from "next/link";
 import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
@@ -11,18 +11,13 @@ import { formatPrice } from "@/lib/formatPrice";
 
 const SingleItem = ({ item, brand }: { item: Product; brand?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { openWithProduct } = useAddToCartModal();
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
   const isWishlisted = wishlistItems.some((i) => i.id === item.id);
   const brandPrefix = brand ? `/${brand}` : "";
 
-  // add to cart
   const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
+    openWithProduct(item);
   };
 
   const handleItemToWishList = (e: React.MouseEvent) => {
@@ -45,43 +40,6 @@ const SingleItem = ({ item, brand }: { item: Product; brand?: string }) => {
     <div className="group">
       <div className="relative overflow-hidden rounded-lg bg-[#F6F7FB] min-h-[403px]">
         <div className="text-center px-4 py-7.5">
-          <div className="flex items-center justify-center gap-2.5 mb-2">
-            <div className="flex items-center gap-1">
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={14}
-                height={14}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={14}
-                height={14}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={14}
-                height={14}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={14}
-                height={14}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={14}
-                height={14}
-              />
-            </div>
-
-            <p className="text-custom-sm">({item.reviews})</p>
-          </div>
-
           <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
             <Link href={`${brandPrefix}/shop-details/${item.slug || "#"}`}> {item.title} </Link>
           </h3>

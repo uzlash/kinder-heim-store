@@ -16,7 +16,7 @@ function brandFilter(slugs: string[]) {
 
 export default defineConfig({
   name: 'default',
-  title: 'NextMerce Ecommerce',
+  title: 'Kinder/HEIM Footwear and Kitchenware',
   projectId,
   dataset,
   basePath: '/studio',
@@ -26,7 +26,78 @@ export default defineConfig({
         S.list()
           .title('Content')
           .items([
-            // —— Content by brand: pick brand first, then Products / Categories / Orders ——
+            // —— Orders: grouped by status ——
+            S.listItem()
+              .title('Orders')
+              .id('orders')
+              .child(
+                S.list()
+                  .title('Orders by status')
+                  .items([
+                    S.listItem()
+                      .title('Pending')
+                      .id('orders-pending')
+                      .child(
+                        S.documentList()
+                          .title('Pending orders')
+                          .filter('_type == "order" && status == "pending"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                    S.listItem()
+                      .title('Confirmed')
+                      .id('orders-confirmed')
+                      .child(
+                        S.documentList()
+                          .title('Confirmed orders')
+                          .filter('_type == "order" && status == "confirmed"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                    S.listItem()
+                      .title('Processing')
+                      .id('orders-processing')
+                      .child(
+                        S.documentList()
+                          .title('Processing orders')
+                          .filter('_type == "order" && status == "processing"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                    S.listItem()
+                      .title('Shipped')
+                      .id('orders-shipped')
+                      .child(
+                        S.documentList()
+                          .title('Shipped orders')
+                          .filter('_type == "order" && status == "shipped"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                    S.listItem()
+                      .title('Delivered')
+                      .id('orders-delivered')
+                      .child(
+                        S.documentList()
+                          .title('Delivered orders')
+                          .filter('_type == "order" && status == "delivered"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                    S.listItem()
+                      .title('Cancelled')
+                      .id('orders-cancelled')
+                      .child(
+                        S.documentList()
+                          .title('Cancelled orders')
+                          .filter('_type == "order" && status == "cancelled"')
+                          .schemaType('order')
+                          .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                      ),
+                  ])
+              ),
+            S.divider(),
+            // —— Content by brand: Products & Categories only (orders are above) ——
             S.listItem()
               .title('Content by brand')
               .id('by-brand')
@@ -59,16 +130,6 @@ export default defineConfig({
                                   .filter(`_type == "category" && ${brandFilter(HEIM_SLUGS)}`)
                                   .schemaType('category')
                               ),
-                            S.listItem()
-                              .title('Orders')
-                              .schemaType('order')
-                              .child(
-                                S.documentList()
-                                  .title('HEIM Orders')
-                                  .filter(`_type == "order" && ${brandFilter(HEIM_SLUGS)}`)
-                                  .schemaType('order')
-                                  .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
-                              ),
                           ])
                       ),
                     S.listItem()
@@ -96,16 +157,6 @@ export default defineConfig({
                                   .filter(`_type == "category" && ${brandFilter(KINDER_SLUGS)}`)
                                   .schemaType('category')
                               ),
-                            S.listItem()
-                              .title('Orders')
-                              .schemaType('order')
-                              .child(
-                                S.documentList()
-                                  .title('Kinder Orders')
-                                  .filter(`_type == "order" && ${brandFilter(KINDER_SLUGS)}`)
-                                  .schemaType('order')
-                                  .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
-                              ),
                           ])
                       ),
                   ])
@@ -116,6 +167,10 @@ export default defineConfig({
               .title('Brands')
               .schemaType('brand')
               .child(S.documentTypeList('brand').title('Brands')),
+            S.listItem()
+              .title('Colors')
+              .schemaType('color')
+              .child(S.documentTypeList('color').title('Colors')),
             S.listItem()
               .title('Homepages')
               .schemaType('homePage')
@@ -128,7 +183,7 @@ export default defineConfig({
             // —— Other doc types (not brand-scoped) ——
             ...S.documentTypeListItems().filter(
               (item) =>
-                !['homePage', 'brand', 'siteSettings', 'product', 'category', 'order'].includes(
+                !['homePage', 'brand', 'siteSettings', 'product', 'category', 'order', 'color'].includes(
                   item.getId() ?? ''
                 )
             ),

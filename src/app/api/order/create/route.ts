@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const body = await request.json()
-    const { items, shippingAddress, billingAddress, paymentMethod, shippingMethod, total, subtotal, shippingCost, tax, email, name, phone, brandSlug } = body
+    const { items, shippingAddress, shippingMethod, total, subtotal, shippingCost, email, name, phone, notes } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -17,12 +17,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate stock
+    // Validate stock and resolve each item to Sanity product _id (for order references)
+    const productIdByItemKey: string[] = []
     for (const item of items) {
-      const product = await clientWithToken.fetch(
-        `*[_type == "product" && _id == $id][0] { inventory, name }`,
-        { id: item.id || item._id } // Handle both id formats
+      const idParam = item.id || item._id
+      let product = await clientWithToken.fetch(
+        `*[_type == "product" && _id == $id][0] { inventory, name, _id }`,
+        { id: idParam }
       )
+      if (!product && (item.slug || (typeof idParam === 'string' && !idParam.startsWith('product-') && idParam.length < 50))) {
+        const slug = item.slug || idParam
+        product = await clientWithToken.fetch(
+          `*[_type == "product" && slug.current == $slug][0] { inventory, name, _id }`,
+          { slug }
+        )
+      }
 
       if (!product) {
         return NextResponse.json(
@@ -37,6 +46,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      productIdByItemKey.push(product._id)
     }
 
     // Generate order number
@@ -69,26 +79,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Resolve brand reference for back-office filtering (optional)
-    let brandRef: { _type: 'reference'; _ref: string } | undefined
-    if (brandSlug && typeof brandSlug === 'string') {
-      const slugVariants: Record<string, string[]> = {
-        heim: ['heim', 'heim-kitchenware'],
-        kinder: ['kinder', 'kinder-footwear', 'kinder-footware'],
-      }
-      const slugs = slugVariants[brandSlug.toLowerCase()] || [brandSlug]
-      const brandId = await clientWithToken.fetch<string | null>(
-        `*[_type == "brand" && slug.current in $slugs][0]._id`,
-        { slugs }
-      )
-      if (brandId) brandRef = { _type: 'reference', _ref: brandId }
-    }
+    // Orders are not scoped by brand (single bank account for HEIM + Kinder); one Orders list in Sanity.
+
+    const sanitizedShippingAddress =
+      shippingAddress && typeof shippingAddress === 'object'
+        ? { fullName: shippingAddress.fullName ?? '', address1: shippingAddress.address1 ?? '' }
+        : { fullName: '', address1: '' }
 
     // Create order
     const order = await clientWithToken.create({
       _type: 'order',
       orderNumber,
-      ...(brandRef && { brand: brandRef }),
       customer: {
         _type: 'reference',
         _ref: customerId,
@@ -96,11 +97,11 @@ export async function POST(request: NextRequest) {
       customerEmail: email,
       customerName: name,
       customerPhone: phone,
-      items: items.map((item: any) => ({
+      items: items.map((item: any, index: number) => ({
         _key: Math.random().toString(36).substring(7),
         product: {
           _type: 'reference',
-          _ref: item.id || item._id,
+          _ref: productIdByItemKey[index],
         },
         productName: item.title,
         quantity: item.quantity,
@@ -108,24 +109,22 @@ export async function POST(request: NextRequest) {
         color: item.color,
         size: item.size,
       })),
-      shippingAddress,
-      billingAddress,
-      paymentMethod,
+      shippingAddress: sanitizedShippingAddress,
       shippingMethod,
       subtotal,
       shippingCost,
-      tax,
       total,
       status: 'pending',
       paymentStatus: 'pending',
+      notes: notes ? String(notes).trim() : undefined,
       createdAt: new Date().toISOString(),
     })
 
-    // Update inventory
-    for (const item of items) {
+    // Update inventory (use resolved Sanity product _id)
+    for (let i = 0; i < items.length; i++) {
       await clientWithToken
-        .patch(item.id || item._id)
-        .dec({ inventory: item.quantity })
+        .patch(productIdByItemKey[i])
+        .dec({ inventory: items[i].quantity })
         .commit()
     }
 

@@ -8,42 +8,45 @@ import { useDispatch } from "react-redux";
 import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
-import { updateproductDetails } from "@/redux/features/product-details";
 import { formatPrice } from "@/lib/formatPrice";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
   const { openPreviewModal } = usePreviewSlider();
   const [quantity, setQuantity] = useState(1);
+  const [activeColorKey, setActiveColorKey] = useState(0);
+  const [activeSize, setActiveSize] = useState("");
 
   const dispatch = useDispatch<AppDispatch>();
 
-  // get the product data
   const product = useAppSelector((state) => state.quickViewReducer.value);
-
   const [activePreview, setActivePreview] = useState(0);
 
-  // preview modal
-  const handlePreviewSlider = () => {
-    dispatch(updateproductDetails(product));
+  const colorOptions = product?.colorVariants?.map((v) => v.color) ?? [];
+  const availableSizes = product?.colorVariants?.[activeColorKey]?.sizes ?? [];
+  const selectedColorName = colorOptions[activeColorKey]?.name;
+  const needsSize = availableSizes.length > 0;
+  const canAdd = !needsSize || activeSize.length > 0;
 
-    openPreviewModal();
+  const handlePreviewSlider = () => {
+    const images = product?.imgs?.previews?.length ? product.imgs.previews : (product?.imgs?.thumbnails ?? []);
+    openPreviewModal({ images, initialIndex: activePreview, productTitle: product?.title });
   };
 
-  // add to cart
   const handleAddToCart = () => {
+    if (!product || !canAdd) return;
     dispatch(
       addItemToCart({
         ...product,
         quantity,
+        color: selectedColorName,
+        size: activeSize || undefined,
       })
     );
-
     closeModal();
   };
 
   useEffect(() => {
-    // closing modal while clicking outside
     function handleClickOutside(event) {
       if (!event.target.closest(".modal-content")) {
         closeModal();
@@ -56,8 +59,9 @@ const QuickViewModal = () => {
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-
       setQuantity(1);
+      setActiveColorKey(0);
+      setActiveSize("");
     };
   }, [isModalOpen, closeModal]);
 
@@ -96,6 +100,7 @@ const QuickViewModal = () => {
                 <div className="flex flex-col gap-5">
                   {product.imgs.thumbnails?.map((img, key) => (
                     <button
+                      aria-label="Preview image"
                       onClick={() => setActivePreview(key)}
                       key={key}
                       className={`flex items-center justify-center w-20 h-20 overflow-hidden rounded-lg bg-gray-1 ease-out duration-200 hover:border-2 hover:border-blue ${activePreview === key && "border-2 border-blue"
@@ -159,121 +164,6 @@ const QuickViewModal = () => {
               </h3>
 
               <div className="flex flex-wrap items-center gap-5 mb-6">
-                <div className="flex items-center gap-1.5">
-                  {/* <!-- stars --> */}
-                  <div className="flex items-center gap-1">
-                    <svg
-                      className="fill-[#FFA645]"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_375_9172)">
-                        <path
-                          d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                          fill=""
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_375_9172">
-                          <rect width="18" height="18" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-
-                    <svg
-                      className="fill-[#FFA645]"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_375_9172)">
-                        <path
-                          d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                          fill=""
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_375_9172">
-                          <rect width="18" height="18" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-
-                    <svg
-                      className="fill-[#FFA645]"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_375_9172)">
-                        <path
-                          d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                          fill=""
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_375_9172">
-                          <rect width="18" height="18" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-
-                    <svg
-                      className="fill-gray-4"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_375_9172)">
-                        <path
-                          d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                          fill=""
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_375_9172">
-                          <rect width="18" height="18" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-
-                    <svg
-                      className="fill-gray-4"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_375_9172)">
-                        <path
-                          d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                          fill=""
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_375_9172">
-                          <rect width="18" height="18" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </div>
-
-                  <span>
-                    <span className="font-medium text-dark"> 4.7 Rating </span>
-                    <span className="text-dark-2"> (5 reviews) </span>
-                  </span>
-                </div>
-
                 <div className="flex items-center gap-2">
                   <svg
                     width="20"
@@ -307,6 +197,59 @@ const QuickViewModal = () => {
                 Lorem Ipsum is simply dummy text of the printing and typesetting
                 industry. Lorem Ipsum has.
               </p>
+
+              {colorOptions.length > 0 && (
+                <div className="mt-5">
+                  <h4 className="font-semibold text-dark mb-2">Choose color and size</h4>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {colorOptions.map((color, key) => (
+                      <label
+                        key={key}
+                        className={`cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 transition-colors ${
+                          activeColorKey === key ? "border-blue bg-blue/5" : "border-gray-3 hover:border-gray-4"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="qv-color"
+                          className="sr-only"
+                          checked={activeColorKey === key}
+                          onChange={() => {
+                            setActiveColorKey(key);
+                            setActiveSize("");
+                          }}
+                        />
+                        <span
+                          className="w-4 h-4 rounded-full border border-gray-3 flex-shrink-0"
+                          style={{ backgroundColor: color.value || "#eee" }}
+                        />
+                        <span className="text-custom-sm text-dark">{color.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {availableSizes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {availableSizes.map((size) => (
+                        <label
+                          key={size}
+                          className={`cursor-pointer px-3 py-1.5 rounded-md border-2 text-custom-sm font-medium transition-colors ${
+                            activeSize === size ? "border-blue bg-blue text-white" : "border-gray-3 hover:border-gray-4 text-dark"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="qv-size"
+                            className="sr-only"
+                            checked={activeSize === size}
+                            onChange={() => setActiveSize(size)}
+                          />
+                          {size}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-wrap justify-between gap-5 mt-6 mb-7.5">
                 <div>
@@ -393,12 +336,11 @@ const QuickViewModal = () => {
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
-                  disabled={quantity === 0 && true}
+                  disabled={quantity === 0 || !canAdd}
                   onClick={() => handleAddToCart()}
-                  className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark
-                  `}
+                  className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  Add to Cart
+                  {!canAdd && needsSize ? "Choose a size" : "Add to Cart"}
                 </button>
 
                 <button

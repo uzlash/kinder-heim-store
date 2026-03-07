@@ -1,6 +1,6 @@
 import React from "react";
 import ShopDetails from "@/components/ShopDetails";
-import { getProductBySlug } from "@/lib/sanity.queries";
+import { getProductBySlug, getSiteSettings } from "@/lib/sanity.queries";
 import { sanityProductToProduct } from "@/lib/sanityHelpers";
 import { urlFor } from "@/lib/sanity.image";
 import { Metadata, ResolvingMetadata } from "next";
@@ -38,8 +38,11 @@ export const revalidate = 60;
 
 const ShopDetailsPage = async ({ params }: Props) => {
   const { slug } = await params;
-  const sanityProduct = await getProductBySlug(slug);
-  
+  const [sanityProduct, siteSettings] = await Promise.all([
+    getProductBySlug(slug),
+    getSiteSettings(),
+  ]);
+
   if (!sanityProduct) {
     return (
       <main>
@@ -54,7 +57,7 @@ const ShopDetailsPage = async ({ params }: Props) => {
 
   return (
     <main>
-      <ShopDetails product={product} />
+      <ShopDetails product={product} siteContactPhone={siteSettings?.contactPhone} />
     </main>
   );
 };

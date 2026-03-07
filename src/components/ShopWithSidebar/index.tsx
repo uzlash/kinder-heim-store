@@ -12,10 +12,12 @@ import { Product } from "@/types/product";
 import { Category } from "@/types/category";
 import { useRouter, useSearchParams } from "next/navigation";
 
+export type ShopColor = { name: string; value: string };
+
 interface ShopWithSidebarProps {
   initialProducts: Product[];
   categories: Category[];
-  colors: string[];
+  colors: ShopColor[];
   sizes: string[];
   totalProducts: number;
   currentPage: number;
@@ -327,6 +329,7 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                     <ul className="flex items-center">
                       <li>
                         <button
+                        aria-label="Previous page"
                           onClick={() => handlePageChange(currentPage - 1)}
                           disabled={currentPage === 1}
                           className="flex items-center justify-center w-8 h-9 ease-out duration-200 rounded-[3px] hover:text-white hover:bg-blue disabled:text-gray-4 disabled:hover:bg-transparent disabled:hover:text-gray-4 disabled:cursor-not-allowed"
@@ -364,6 +367,7 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
 
                       <li>
                         <button
+                          aria-label="Next page"
                           onClick={() => handlePageChange(currentPage + 1)}
                           disabled={currentPage === totalPages}
                           className="flex items-center justify-center w-8 h-9 ease-out duration-200 rounded-[3px] hover:text-white hover:bg-blue disabled:text-gray-4 disabled:hover:bg-transparent disabled:hover:text-gray-4 disabled:cursor-not-allowed"
