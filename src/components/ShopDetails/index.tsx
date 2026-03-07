@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
-import RecentlyViewdItems from "./RecentlyViewd";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { useAppSelector } from "@/redux/store";
 import { Product } from "@/types/product";
@@ -1091,8 +1090,6 @@ const ShopDetails = ({ product: initialProduct }: ShopDetailsProps) => {
               {/* <!--== tab content end ==--> */}
             </div>
           </section>
-
-          <RecentlyViewdItems />
 
           <Newsletter />
         </>

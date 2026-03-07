@@ -2,6 +2,7 @@ import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useAppSelector } from "@/redux/store";
 import React from "react";
 import { useSelector } from "react-redux";
+import Link from "next/link";
 import { formatPrice } from "@/lib/formatPrice";
 
 const OrderSummary = () => {
@@ -35,7 +36,7 @@ const OrderSummary = () => {
               </div>
               <div>
                 <p className="text-dark text-right">
-                  ${formatPrice(item.discountedPrice * item.quantity)}
+                  ₦{formatPrice(item.discountedPrice * item.quantity)}
                 </p>
               </div>
             </div>
@@ -48,18 +49,18 @@ const OrderSummary = () => {
             </div>
             <div>
               <p className="font-medium text-lg text-dark text-right">
-                ${formatPrice(totalPrice)}
+                ₦{formatPrice(totalPrice)}
               </p>
             </div>
           </div>
 
           {/* <!-- checkout button --> */}
-          <button
-            type="submit"
+          <Link
+            href="/checkout"
             className="w-full flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
           >
             Process to Checkout
-          </button>
+          </Link>
         </div>
       </div>
     </div>

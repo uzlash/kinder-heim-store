@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import "../css/euclid-circular-a-font.css";
 import "../css/style.css";
 import Header from "../../components/Header";
@@ -16,6 +17,7 @@ import PreviewSliderModal from "@/components/Common/PreviewSlider";
 import ScrollToTop from "@/components/Common/ScrollToTop";
 import PreLoader from "@/components/Common/PreLoader";
 import SessionProvider from "@/components/Providers/SessionProvider";
+import { BrandProvider } from "../context/BrandContext";
 
 export default function RootLayout({
   children,
@@ -23,6 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState<boolean>(true);
+  const pathname = usePathname();
+  const isLandingPage = pathname === "/";
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);
@@ -36,23 +40,25 @@ export default function RootLayout({
         ) : (
           <>
             <SessionProvider>
-              <ReduxProvider>
-                <CartModalProvider>
-                  <ModalProvider>
-                    <PreviewSliderProvider>
-                      <Header />
-                      {children}
+              <BrandProvider>
+                <ReduxProvider>
+                  <CartModalProvider>
+                    <ModalProvider>
+                      <PreviewSliderProvider>
+                        {!isLandingPage && <Header />}
+                        {children}
 
-                      <QuickViewModal />
-                      <CartSidebarModal />
-                      <PreviewSliderModal />
-                    </PreviewSliderProvider>
-                  </ModalProvider>
-                </CartModalProvider>
-              </ReduxProvider>
+                        <QuickViewModal />
+                        <CartSidebarModal />
+                        <PreviewSliderModal />
+                      </PreviewSliderProvider>
+                    </ModalProvider>
+                  </CartModalProvider>
+                </ReduxProvider>
+              </BrandProvider>
             </SessionProvider>
             <ScrollToTop />
-            <Footer />
+            {!isLandingPage && <Footer />}
           </>
         )}
       </body>

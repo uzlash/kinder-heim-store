@@ -16,10 +16,13 @@ export interface PromoBannerProps {
   bigCard?: Product | null;
   mediumCard1?: Product | null;
   mediumCard2?: Product | null;
+  brand?: string;
 }
 
-function PromoBanner({ bigCard, mediumCard1, mediumCard2 }: PromoBannerProps) {
+function PromoBanner({ bigCard, mediumCard1, mediumCard2, brand }: PromoBannerProps) {
   const hasAny = bigCard || mediumCard1 || mediumCard2;
+  const brandPrefix = brand ? `/${brand}` : "";
+
   if (!hasAny) return null;
 
   const bigImg = bigCard?.imgs?.previews?.[0] ?? bigCard?.imgs?.thumbnails?.[0];
@@ -41,13 +44,13 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2 }: PromoBannerProps) {
                 </h2>
               )}
               <p className="text-dark">
-                From ${formatPrice(bigCard.discountedPrice)}
+                From ₦{formatPrice(bigCard.discountedPrice)}
                 {bigCard.price > bigCard.discountedPrice && (
-                  <span className="line-through ml-1">${formatPrice(bigCard.price)}</span>
+                  <span className="line-through ml-1">₦{formatPrice(bigCard.price)}</span>
                 )}
               </p>
               <Link
-                href={`/shop-details/${bigCard.slug ?? "#"}`}
+                href={`${brandPrefix}/shop-details/${bigCard.slug ?? "#"}`}
                 className="inline-flex font-medium text-custom-sm text-white bg-blue py-[11px] px-9.5 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
               >
                 Buy Now
@@ -87,10 +90,10 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2 }: PromoBannerProps) {
                   </h2>
                 )}
                 <p className="font-semibold text-custom-1 text-teal">
-                  ${formatPrice(mediumCard1.discountedPrice)}
+                  ₦{formatPrice(mediumCard1.discountedPrice)}
                 </p>
                 <Link
-                  href={`/shop-details/${mediumCard1.slug ?? "#"}`}
+                  href={`${brandPrefix}/shop-details/${mediumCard1.slug ?? "#"}`}
                   className="inline-flex font-medium text-custom-sm text-white bg-teal py-2.5 px-8.5 rounded-md ease-out duration-200 hover:bg-teal-dark mt-9"
                 >
                   Grab Now
@@ -120,13 +123,13 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2 }: PromoBannerProps) {
                   </h2>
                 )}
                 <p className="max-w-[285px] text-custom-sm text-dark">
-                  ${formatPrice(mediumCard2.discountedPrice)}
+                  ₦{formatPrice(mediumCard2.discountedPrice)}
                   {mediumCard2.price > mediumCard2.discountedPrice && (
-                    <span className="line-through ml-1">${formatPrice(mediumCard2.price)}</span>
+                    <span className="line-through ml-1">₦{formatPrice(mediumCard2.price)}</span>
                   )}
                 </p>
                 <Link
-                  href={`/shop-details/${mediumCard2.slug ?? "#"}`}
+                  href={`${brandPrefix}/shop-details/${mediumCard2.slug ?? "#"}`}
                   className="inline-flex font-medium text-custom-sm text-white bg-orange py-2.5 px-8.5 rounded-md ease-out duration-200 hover:bg-orange-dark mt-7.5"
                 >
                   Buy Now

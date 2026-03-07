@@ -20,9 +20,12 @@ interface ShopWithSidebarProps {
   totalProducts: number;
   currentPage: number;
   productsPerPage: number;
+  brand?: string;
+  /** Min/max price from catalog (for price filter slider bounds) */
+  priceBounds?: { min: number; max: number };
 }
 
-const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProducts, currentPage, productsPerPage }: ShopWithSidebarProps) => {
+const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProducts, currentPage, productsPerPage, brand, priceBounds }: ShopWithSidebarProps) => {
   const [productStyle, setProductStyle] = useState("grid");
   const [productSidebar, setProductSidebar] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
@@ -30,12 +33,23 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const brandPrefix = brand ? `/${brand}` : "";
+  const isHeim = brand === "heim";
+  const isKinder = brand === "kinder";
+
+  const accentColor = isHeim ? "text-orange" : isKinder ? "text-dark" : "text-blue";
+  const hoverAccentColor = isHeim ? "hover:text-orange" : isKinder ? "hover:text-dark" : "hover:text-blue";
+  const bgAccentColor = isHeim ? "bg-orange" : isKinder ? "bg-dark" : "bg-blue";
+  const borderAccentColor = isHeim ? "border-orange" : isKinder ? "border-dark" : "border-blue";
+  const hoverBgAccentColor = isHeim ? "hover:bg-orange" : isKinder ? "hover:bg-dark" : "hover:bg-blue";
+  const hoverBorderAccentColor = isHeim ? "hover:border-orange" : isKinder ? "hover:border-dark" : "hover:border-blue";
+
   const totalPages = Math.ceil(totalProducts / productsPerPage);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
-    router.push(`/shop?${params.toString()}`);
+    router.push(`${brandPrefix}/shop?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -59,11 +73,11 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
     }
     // Reset page to 1 when filtering
     params.delete("page");
-    router.push(`/shop?${params.toString()}`);
+    router.push(`${brandPrefix}/shop?${params.toString()}`);
   };
 
   const handleClearAll = () => {
-    router.push("/shop");
+    router.push(`${brandPrefix}/shop`);
   };
 
   const options = [
@@ -146,7 +160,7 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                   <div className="bg-white shadow-1 rounded-lg py-4 px-5">
                     <div className="flex items-center justify-between">
                       <p>Filters:</p>
-                      <button onClick={handleClearAll} className="text-blue">Clean All</button>
+                      <button onClick={handleClearAll} className={accentColor}>Clear All</button>
                     </div>
                   </div>
 
@@ -173,8 +187,10 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
 
                   {/* // <!-- price range box --> */}
                   <PriceDropdown 
-                    min={searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined}
-                    max={searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined}
+                    catalogMin={priceBounds?.min ?? 0}
+                    catalogMax={priceBounds?.max ?? 1000}
+                    selectedMin={searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined}
+                    selectedMax={searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined}
                     onChange={(min, max) => {
                       handleFilterChange("minPrice", min);
                       handleFilterChange("maxPrice", max);
@@ -206,9 +222,9 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                       aria-label="button for product grid tab"
                       className={`${
                         productStyle === "grid"
-                          ? "bg-blue border-blue text-white"
+                          ? `${bgAccentColor} ${borderAccentColor} text-white`
                           : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
+                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 ${hoverBgAccentColor} ${hoverBorderAccentColor} hover:text-white`}
                     >
                       <svg
                         className="fill-current"
@@ -250,9 +266,9 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                       aria-label="button for product list tab"
                       className={`${
                         productStyle === "list"
-                          ? "bg-blue border-blue text-white"
+                          ? `${bgAccentColor} ${borderAccentColor} text-white`
                           : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
+                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 ${hoverBgAccentColor} ${hoverBorderAccentColor} hover:text-white`}
                     >
                       <svg
                         className="fill-current"
@@ -291,9 +307,9 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                 {products.length > 0 ? (
                   products.map((item, key) =>
                     productStyle === "grid" ? (
-                      <SingleGridItem item={item} key={key} />
+                      <SingleGridItem item={item} key={key} brand={brand} />
                     ) : (
-                      <SingleListItem item={item} key={key} />
+                      <SingleListItem item={item} key={key} brand={brand} />
                     )
                   )
                 ) : (
@@ -337,8 +353,8 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                             onClick={() => handlePageChange(page)}
                             className={`flex py-1.5 px-3.5 duration-200 rounded-[3px] ${
                               currentPage === page
-                                ? "bg-blue text-white"
-                                : "hover:text-white hover:bg-blue"
+                                ? `${bgAccentColor} text-white`
+                                : `hover:text-white ${hoverBgAccentColor}`
                             }`}
                           >
                             {page}

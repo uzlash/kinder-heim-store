@@ -3,24 +3,30 @@ import RangeSlider from 'react-range-slider-input';
 import 'react-range-slider-input/dist/style.css';
 
 interface PriceDropdownProps {
-  min?: number;
-  max?: number;
+  /** Catalog min/max (slider bounds from aggregation) */
+  catalogMin: number;
+  catalogMax: number;
+  /** Currently selected range (from URL) */
+  selectedMin?: number;
+  selectedMax?: number;
   onChange: (min: number, max: number) => void;
 }
 
-const PriceDropdown = ({ min, max, onChange }: PriceDropdownProps) => {
+const PriceDropdown = ({ catalogMin, catalogMax, selectedMin, selectedMax, onChange }: PriceDropdownProps) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   const [selectedPrice, setSelectedPrice] = useState({
-    from: min || 0,
-    to: max || 1000,
+    from: selectedMin ?? catalogMin,
+    to: selectedMax ?? catalogMax,
   });
 
   useEffect(() => {
-    if (min !== undefined && max !== undefined) {
-      setSelectedPrice({ from: min, to: max });
+    if (selectedMin !== undefined && selectedMax !== undefined) {
+      setSelectedPrice({ from: selectedMin, to: selectedMax });
+    } else {
+      setSelectedPrice({ from: catalogMin, to: catalogMax });
     }
-  }, [min, max]);
+  }, [selectedMin, selectedMax, catalogMin, catalogMax]);
 
   return (
     <div className="bg-white shadow-1 rounded-lg">
@@ -63,8 +69,8 @@ const PriceDropdown = ({ min, max, onChange }: PriceDropdownProps) => {
               id="range-slider-gradient"
               className="margin-lg"
               step={'any'}
-              min={0}
-              max={1000}
+              min={catalogMin}
+              max={catalogMax}
               value={[selectedPrice.from, selectedPrice.to]}
               onInput={(e: any) =>
                 setSelectedPrice({
@@ -78,19 +84,19 @@ const PriceDropdown = ({ min, max, onChange }: PriceDropdownProps) => {
             <div className="price-amount flex items-center justify-between pt-4">
               <div className="text-custom-xs text-dark-4 flex rounded border border-gray-3/80">
                 <span className="block border-r border-gray-3/80 px-2.5 py-1.5">
-                  $
+                  ₦
                 </span>
                 <span id="minAmount" className="block px-3 py-1.5">
-                  {selectedPrice.from}
+                  {selectedPrice.from.toLocaleString()}
                 </span>
               </div>
 
               <div className="text-custom-xs text-dark-4 flex rounded border border-gray-3/80">
                 <span className="block border-r border-gray-3/80 px-2.5 py-1.5">
-                  $
+                  ₦
                 </span>
                 <span id="maxAmount" className="block px-3 py-1.5">
-                  {selectedPrice.to}
+                  {selectedPrice.to.toLocaleString()}
                 </span>
               </div>
             </div>

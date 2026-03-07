@@ -5,15 +5,18 @@ import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
 import { addItemToCart } from "@/redux/features/cart-slice";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { formatPrice } from "@/lib/formatPrice";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
 import Image from "next/image";
 
-const SingleListItem = ({ item }: { item: Product }) => {
+const SingleListItem = ({ item, brand }: { item: Product; brand?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
+  const isWishlisted = wishlistItems.some((i) => i.id === item.id);
+  const brandPrefix = brand ? `/${brand}` : "";
 
   // add to cart
   const handleAddToCart = () => {
@@ -25,14 +28,20 @@ const SingleListItem = ({ item }: { item: Product }) => {
     );
   };
 
-  const handleItemToWishList = () => {
-    dispatch(
-      addItemToWishlist({
-        ...item,
-        status: "available",
-        quantity: 1,
-      })
-    );
+  const handleItemToWishList = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isWishlisted) {
+      dispatch(removeItemFromWishlist(item.id));
+    } else {
+      dispatch(
+        addItemToWishlist({
+          ...item,
+          status: "available",
+          quantity: 1,
+        })
+      );
+    }
   };
 
   return (
@@ -49,7 +58,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
 
           <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0">
             <Link
-              href={`/shop-details/${item.slug || "#"}`}
+              href={`${brandPrefix}/shop-details/${item.slug || "#"}`}
               aria-label="View product details"
               className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
             >
@@ -84,9 +93,12 @@ const SingleListItem = ({ item }: { item: Product }) => {
             </button>
 
             <button
-              onClick={() => handleItemToWishList()}
-              aria-label="button for favorite select"
-              className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-blue"
+              type="button"
+              onClick={handleItemToWishList}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              className={`flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 ${
+                isWishlisted ? "text-white bg-pink" : "text-dark bg-white hover:text-pink"
+              }`}
             >
               <svg
                 className="fill-current"
@@ -110,12 +122,12 @@ const SingleListItem = ({ item }: { item: Product }) => {
         <div className="w-full flex flex-col gap-5 sm:flex-row sm:items-center justify-center sm:justify-between py-5 px-4 sm:px-7.5 lg:pl-11 lg:pr-12">
           <div>
             <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
-              <Link href={`/shop-details/${item.slug || "#"}`}> {item.title} </Link>
+              <Link href={`${brandPrefix}/shop-details/${item.slug || "#"}`}> {item.title} </Link>
             </h3>
 
             <span className="flex items-center gap-2 font-medium text-lg">
-              <span className="text-dark">${formatPrice(item.discountedPrice)}</span>
-              <span className="text-dark-4 line-through">${formatPrice(item.price)}</span>
+              <span className="text-dark">₦{formatPrice(item.discountedPrice)}</span>
+              <span className="text-dark-4 line-through">₦{formatPrice(item.price)}</span>
             </span>
           </div>
 

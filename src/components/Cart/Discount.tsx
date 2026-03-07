@@ -1,9 +1,15 @@
+"use client";
 import React from "react";
 
 const Discount = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // TODO: validate and apply coupon (e.g. call API or update cart state)
+  };
+
   return (
     <div className="lg:max-w-[670px] w-full">
-      <form>
+      <form onSubmit={handleSubmit}>
         {/* <!-- coupon box --> */}
         <div className="bg-white shadow-1 rounded-[10px]">
           <div className="border-b border-gray-3 py-5 px-4 sm:px-5.5">

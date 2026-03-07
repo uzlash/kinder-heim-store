@@ -17,4 +17,6 @@ export type Product = {
   policy?: string;
   whatsappNumber?: string;
   deliveryInfo?: string;
+  /** Available quantity (from Sanity inventory). Used to cap cart quantity. */
+  stock?: number;
 };

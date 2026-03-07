@@ -27,27 +27,31 @@ interface HomeProps {
   promoMedium2?: Product | null;
   countdownProduct?: Product | null;
   countdownDeadline?: string | null;
+  brand?: string;
 }
 
-const Home = ({ newArrivals, bestSellers, featured, categories, testimonials, heroCarousel = [], heroSmallCard1 = null, heroSmallCard2 = null, promoBig = null, promoMedium1 = null, promoMedium2 = null, countdownProduct = null, countdownDeadline = null }: HomeProps) => {
+const Home = ({ newArrivals, bestSellers, featured, categories, testimonials, heroCarousel = [], heroSmallCard1 = null, heroSmallCard2 = null, promoBig = null, promoMedium1 = null, promoMedium2 = null, countdownProduct = null, countdownDeadline = null, brand }: HomeProps) => {
   return (
     <main>
       <Hero
         carouselProducts={heroCarousel}
         smallCard1={heroSmallCard1}
         smallCard2={heroSmallCard2}
+        brand={brand}
       />
-      <Categories categories={categories} />
-      <NewArrival products={newArrivals} />
+      <Categories categories={categories} brand={brand} />
+      <NewArrival products={newArrivals} brand={brand} />
       <PromoBanner
         bigCard={promoBig}
         mediumCard1={promoMedium1}
         mediumCard2={promoMedium2}
+        brand={brand}
       />
-      <BestSeller products={bestSellers} />
+      <BestSeller products={bestSellers} brand={brand} />
       <CounDown
         product={countdownProduct}
         deadline={countdownDeadline}
+        brand={brand}
       />
       <Testimonials testimonials={testimonials} />
       <Newsletter />

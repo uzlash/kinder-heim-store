@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { AppDispatch } from "@/redux/store";
 import { useDispatch } from "react-redux";
 import {
@@ -8,28 +8,26 @@ import {
 
 import Image from "next/image";
 import { formatPrice } from "@/lib/formatPrice";
+import type { CartItem } from "@/redux/features/cart-slice";
 
-const SingleItem = ({ item }) => {
-  const [quantity, setQuantity] = useState(item.quantity);
-
+const SingleItem = ({ item }: { item: CartItem }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const quantity = item.quantity;
+  const maxStock = item.stock ?? Infinity;
+  const atMax = quantity >= maxStock;
 
   const handleRemoveFromCart = () => {
     dispatch(removeItemFromCart(item.id));
   };
 
   const handleIncreaseQuantity = () => {
-    setQuantity(quantity + 1);
+    if (atMax) return;
     dispatch(updateCartItemQuantity({ id: item.id, quantity: quantity + 1 }));
   };
 
   const handleDecreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-      dispatch(updateCartItemQuantity({ id: item.id, quantity: quantity - 1 }));
-    } else {
-      return;
-    }
+    if (quantity <= 1) return;
+    dispatch(updateCartItemQuantity({ id: item.id, quantity: quantity - 1 }));
   };
 
   return (
@@ -57,16 +55,18 @@ const SingleItem = ({ item }) => {
       </div>
 
       <div className="min-w-[180px]">
-        <p className="text-dark">${formatPrice(item.discountedPrice)}</p>
+        <p className="text-dark">₦{formatPrice(item.discountedPrice)}</p>
       </div>
 
       <div className="min-w-[275px]">
-        <div className="w-max flex items-center rounded-md border border-gray-3">
-          <button
-            onClick={() => handleDecreaseQuantity()}
-            aria-label="button for remove product"
-            className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue"
-          >
+        <div className="w-max flex flex-col gap-1">
+          <div className="flex items-center rounded-md border border-gray-3">
+            <button
+              onClick={handleDecreaseQuantity}
+              disabled={quantity <= 1}
+              aria-label="Decrease quantity"
+              className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
+            >
             <svg
               className="fill-current"
               width="20"
@@ -82,15 +82,16 @@ const SingleItem = ({ item }) => {
             </svg>
           </button>
 
-          <span className="flex items-center justify-center w-16 h-11.5 border-x border-gray-4">
-            {quantity}
-          </span>
+            <span className="flex items-center justify-center w-16 h-11.5 border-x border-gray-4">
+              {quantity}
+            </span>
 
-          <button
-            onClick={() => handleIncreaseQuantity()}
-            aria-label="button for add product"
-            className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue"
-          >
+            <button
+              onClick={handleIncreaseQuantity}
+              disabled={atMax}
+              aria-label="Increase quantity"
+              className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
+            >
             <svg
               className="fill-current"
               width="20"
@@ -108,12 +109,16 @@ const SingleItem = ({ item }) => {
                 fill=""
               />
             </svg>
-          </button>
+            </button>
+          </div>
+          {typeof item.stock === "number" && (
+            <p className="text-custom-xs text-meta-2">Max {item.stock} in stock</p>
+          )}
         </div>
       </div>
 
       <div className="min-w-[200px]">
-        <p className="text-dark">${formatPrice(item.discountedPrice * quantity)}</p>
+        <p className="text-dark">₦{formatPrice(item.discountedPrice * quantity)}</p>
       </div>
 
       <div className="min-w-[50px] flex justify-end">

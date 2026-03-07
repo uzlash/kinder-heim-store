@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/formatPrice";
 
 interface HeroCarouselProps {
   products?: Product[];
+  brand?: string;
 }
 
 function discountPercent(price: number, comparePrice: number): number | null {
@@ -17,8 +18,9 @@ function discountPercent(price: number, comparePrice: number): number | null {
   return Math.round(((comparePrice - price) / comparePrice) * 100);
 }
 
-const HeroCarousel = ({ products = [] }: HeroCarouselProps) => {
+const HeroCarousel = ({ products = [], brand }: HeroCarouselProps) => {
   const hasProducts = products.length > 0;
+  const brandPrefix = brand ? `/${brand}` : "";
 
   if (!hasProducts) {
     return null;
@@ -64,18 +66,18 @@ const HeroCarousel = ({ products = [] }: HeroCarouselProps) => {
                     </div>
                   )}
                   <h1 className="font-semibold text-dark text-xl sm:text-3xl mb-3">
-                    <Link href={`/shop-details/${product.slug ?? "#"}`}>
+                    <Link href={`${brandPrefix}/shop-details/${product.slug ?? "#"}`}>
                       {product.title}
                     </Link>
                   </h1>
-                    <p className="text-dark-4 text-sm line-clamp-2 mb-4">
-                      From ${formatPrice(product.discountedPrice)}
-                      {product.price > product.discountedPrice && (
-                        <span className="line-through ml-1">${formatPrice(product.price)}</span>
-                      )}
-                    </p>
+                  <p className="text-dark-4 text-sm line-clamp-2 mb-4">
+                    From ₦{formatPrice(product.discountedPrice)}
+                    {product.price > product.discountedPrice && (
+                      <span className="line-through ml-1">₦{formatPrice(product.price)}</span>
+                    )}
+                  </p>
                   <Link
-                    href={`/shop-details/${product.slug ?? "#"}`}
+                    href={`${brandPrefix}/shop-details/${product.slug ?? "#"}`}
                     className="inline-flex font-medium text-white text-custom-sm rounded-md bg-dark py-3 px-9 ease-out duration-200 hover:bg-blue mt-10"
                   >
                     Shop Now

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const body = await request.json()
-    const { items, shippingAddress, billingAddress, paymentMethod, shippingMethod, total, subtotal, shippingCost, tax, email, name, phone } = body
+    const { items, shippingAddress, billingAddress, paymentMethod, shippingMethod, total, subtotal, shippingCost, tax, email, name, phone, brandSlug } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -69,10 +69,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Resolve brand reference for back-office filtering (optional)
+    let brandRef: { _type: 'reference'; _ref: string } | undefined
+    if (brandSlug && typeof brandSlug === 'string') {
+      const slugVariants: Record<string, string[]> = {
+        heim: ['heim', 'heim-kitchenware'],
+        kinder: ['kinder', 'kinder-footwear', 'kinder-footware'],
+      }
+      const slugs = slugVariants[brandSlug.toLowerCase()] || [brandSlug]
+      const brandId = await clientWithToken.fetch<string | null>(
+        `*[_type == "brand" && slug.current in $slugs][0]._id`,
+        { slugs }
+      )
+      if (brandId) brandRef = { _type: 'reference', _ref: brandId }
+    }
+
     // Create order
     const order = await clientWithToken.create({
       _type: 'order',
       orderNumber,
+      ...(brandRef && { brand: brandRef }),
       customer: {
         _type: 'reference',
         _ref: customerId,

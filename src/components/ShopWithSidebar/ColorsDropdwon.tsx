@@ -45,39 +45,40 @@ const ColorsDropdwon = ({ colors, selectedColor, onChange }: ColorsDropdownProps
 
       {/* <!-- dropdown menu --> */}
       <div
-        className={`flex-wrap gap-2.5 p-6 ${
+        className={`flex flex-col gap-2 p-6 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >
-        {colors.map((color, key) => (
-          <label
-            key={key}
-            htmlFor={color}
-            className="cursor-pointer select-none flex items-center"
-          >
-            <div className="relative">
-              <input
-                type="radio"
-                name="color"
-                id={color}
-                className="sr-only"
-                checked={selectedColor === color}
-                onChange={() => onChange(color)}
-              />
+        {colors.map((color, key) => {
+          const id = `color-${key}-${color.replace(/\s+/g, "-")}`;
+          return (
+            <label
+              key={key}
+              htmlFor={id}
+              className="cursor-pointer select-none flex items-center gap-2.5"
+            >
               <div
-                className={`flex items-center justify-center w-5.5 h-5.5 rounded-full ${
-                  selectedColor === color && "border ring-1 ring-offset-1 ring-blue"
+                className={`relative flex-shrink-0 flex items-center justify-center w-5.5 h-5.5 rounded-full ${
+                  selectedColor === color ? "ring-1 ring-gray-5 ring-offset-1" : ""
                 }`}
-                style={{ borderColor: `${color}` }}
               >
+                <input
+                  type="radio"
+                  name="color"
+                  id={id}
+                  className="sr-only"
+                  checked={selectedColor === color}
+                  onChange={() => onChange(color)}
+                />
                 <span
-                  className="block w-3 h-3 rounded-full"
-                  style={{ backgroundColor: `${color}` }}
-                ></span>
+                  className="block w-3 h-3 rounded-full border border-gray-3"
+                  style={{ backgroundColor: color }}
+                />
               </div>
-            </div>
-          </label>
-        ))}
+              <span className="text-custom-sm text-dark capitalize">{color}</span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );

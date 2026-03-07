@@ -96,6 +96,11 @@ const config: Config = {
         DEFAULT: "#F27430",
         dark: "#E1580E",
       },
+      pink: {
+        DEFAULT: "#EC4899",
+        dark: "#DB2777",
+        light: "#F472B6",
+      },
     },
     screens: {
       xsm: "375px",

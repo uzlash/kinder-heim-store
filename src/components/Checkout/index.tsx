@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { formatPrice } from "@/lib/formatPrice";
+import { useBrand } from "@/app/context/BrandContext";
 
 const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("bank");
@@ -25,6 +26,7 @@ const Checkout = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { data: session } = useSession();
+  const { brand } = useBrand();
 
   const shippingCost = shippingMethod === "express" ? 15 : 0;
   const total = subtotal + shippingCost;
@@ -38,6 +40,7 @@ const Checkout = () => {
 
     const orderData = {
       items: cartItems,
+      ...(brand && { brandSlug: brand }),
       email: data.email || session?.user?.email,
       name: `${data.firstName} ${data.lastName}`,
       phone: data.phone,

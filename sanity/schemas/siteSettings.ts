@@ -6,6 +6,14 @@ export default defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'brand',
+      title: 'Brand',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      description:
+        'Which brand these settings are for. Create one settings document per brand. Shared details (address, bank, etc.) can be identical.',
+    }),
+    defineField({
       name: 'storeName',
       title: 'Store Name',
       type: 'string',

@@ -1,24 +1,19 @@
 "use client";
 import React from "react";
 import { Product } from "@/types/product";
-import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
-import { updateQuickView } from "@/redux/features/quickView-slice";
+import { AppDispatch, useAppSelector } from "@/redux/store";
 import { addItemToCart } from "@/redux/features/cart-slice";
 import Image from "next/image";
 import Link from "next/link";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { formatPrice } from "@/lib/formatPrice";
 
-const SingleItem = ({ item }: { item: Product }) => {
-  const { openModal } = useModalContext();
+const SingleItem = ({ item, brand }: { item: Product; brand?: string }) => {
   const dispatch = useDispatch<AppDispatch>();
-
-  // update the QuickView state
-  const handleQuickViewUpdate = () => {
-    dispatch(updateQuickView({ ...item }));
-  };
+  const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
+  const isWishlisted = wishlistItems.some((i) => i.id === item.id);
+  const brandPrefix = brand ? `/${brand}` : "";
 
   // add to cart
   const handleAddToCart = () => {
@@ -30,14 +25,20 @@ const SingleItem = ({ item }: { item: Product }) => {
     );
   };
 
-  const handleItemToWishList = () => {
-    dispatch(
-      addItemToWishlist({
-        ...item,
-        status: "available",
-        quantity: 1,
-      } as any)
-    );
+  const handleItemToWishList = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isWishlisted) {
+      dispatch(removeItemFromWishlist(item.id));
+    } else {
+      dispatch(
+        addItemToWishlist({
+          ...item,
+          status: "available",
+          quantity: 1,
+        })
+      );
+    }
   };
 
   return (
@@ -82,12 +83,12 @@ const SingleItem = ({ item }: { item: Product }) => {
           </div>
 
           <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
-            <Link href="/shop-details"> {item.title} </Link>
+            <Link href={`${brandPrefix}/shop-details/${item.slug || "#"}`}> {item.title} </Link>
           </h3>
 
           <span className="flex items-center justify-center gap-2 font-medium text-lg">
-            <span className="text-dark">${formatPrice(item.discountedPrice)}</span>
-            <span className="text-dark-4 line-through">${formatPrice(item.price)}</span>
+            <span className="text-dark">₦{formatPrice(item.discountedPrice)}</span>
+            <span className="text-dark-4 line-through">₦{formatPrice(item.price)}</span>
           </span>
         </div>
 
@@ -102,12 +103,9 @@ const SingleItem = ({ item }: { item: Product }) => {
         </div>
 
         <div className="absolute right-0 bottom-0 translate-x-full u-w-full flex flex-col gap-2 p-5.5 ease-linear duration-300 group-hover:translate-x-0">
-          <button
-            onClick={() => {
-              handleQuickViewUpdate();
-              openModal();
-            }}
-            aria-label="button for quick view"
+          <Link
+            href={`${brandPrefix}/shop-details/${item.slug || "#"}`}
+            aria-label="View product details"
             id="bestOne"
             className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue"
           >
@@ -128,11 +126,11 @@ const SingleItem = ({ item }: { item: Product }) => {
               <path
                 fillRule="evenodd"
                 clipRule="evenodd"
-                d="M7.99992 2.16663C4.9905 2.16663 2.96345 3.96942 1.78696 5.49787L1.76575 5.52543C1.49968 5.87098 1.25463 6.18924 1.08838 6.56556C0.910348 6.96854 0.833252 7.40775 0.833252 7.99996C0.833252 8.59217 0.910348 9.03138 1.08838 9.43436C1.25463 9.81068 1.49968 10.1289 1.76575 10.4745L1.78696 10.5021C2.96345 12.0305 4.9905 13.8333 7.99992 13.8333C11.0093 13.8333 13.0364 12.0305 14.2129 10.5021L14.2341 10.4745C14.5002 10.1289 14.7452 9.81069 14.9115 9.43436C15.0895 9.03138 15.1666 8.59217 15.1666 7.99996C15.1666 7.40775 15.0895 6.96854 14.9115 6.56556C14.7452 6.18923 14.5002 5.87097 14.2341 5.52541L14.2129 5.49787C13.0364 3.96942 11.0093 2.16663 7.99992 2.16663ZM2.5794 6.10783C3.66568 4.69657 5.43349 3.16663 7.99992 3.16663C10.5663 3.16663 12.3342 4.69657 13.4204 6.10783C13.7128 6.48769 13.8841 6.71466 13.9967 6.96966C14.102 7.20797 14.1666 7.49925 14.1666 7.99996C14.1666 8.50067 14.102 8.79195 13.9967 9.03026C13.8841 9.28526 13.7128 9.51223 13.4204 9.89209C12.3342 11.3033 10.5663 12.8333 7.99992 12.8333C5.43349 12.8333 3.66568 11.3033 2.5794 9.89209C2.28701 9.51223 2.11574 9.28525 2.00309 9.03026C1.89781 8.79195 1.83325 8.50067 1.83325 7.99996C1.83325 7.49925 1.89781 7.20797 2.00309 6.96966C2.11574 6.71466 2.28701 6.48769 2.5794 6.10783Z"
+                d="M7.99992 2.16663C4.9905 2.16663 2.96345 3.96942 1.78696 5.49787L1.76575 5.52543C1.49968 5.87098 1.25463 6.18924 1.08838 6.5656C0.910348 6.96854 0.833252 7.40775 0.833252 7.99996C0.833252 8.59217 0.910348 9.03138 1.08838 9.43436C1.25463 9.81068 1.49968 10.1289 1.76575 10.4745L1.78696 10.5021C2.96345 12.0305 4.9905 13.8333 7.99992 13.8333C11.0093 13.8333 13.0364 12.0305 14.2129 10.5021L14.2341 10.4745C14.5002 10.1289 14.7452 9.81069 14.9115 9.43436C15.0895 9.03138 15.1666 8.59217 15.1666 7.99996C15.1666 7.40775 15.0895 6.96854 14.9115 6.56556C14.7452 6.18923 14.5002 5.87097 14.2341 5.52541L14.2129 5.49787C13.0364 3.96942 11.0093 2.16663 7.99992 2.16663ZM2.5794 6.10783C3.66568 4.69657 5.43349 3.16663 7.99992 3.16663C10.5663 3.16663 12.3342 4.69657 13.4204 6.10783C13.7128 6.48769 13.8841 6.71466 13.9967 6.96966C14.102 7.20797 14.1666 7.49925 14.1666 7.99996C14.1666 8.50067 14.102 8.79195 13.9967 9.03026C13.8841 9.28526 13.7128 9.51223 13.4204 9.89209C12.3342 11.3033 10.5663 12.8333 7.99992 12.8333C5.43349 12.8333 3.66568 11.3033 2.5794 9.89209C2.28701 9.51223 2.11574 9.28525 2.00309 9.03026C1.89781 8.79195 1.83325 8.50067 1.83325 7.99996C1.83325 7.49925 1.89781 7.20797 2.00309 6.96966C2.11574 6.71466 2.28701 6.48769 2.5794 6.10783Z"
                 fill=""
               />
             </svg>
-          </button>
+          </Link>
 
           <button
             onClick={() => handleAddToCart()}
@@ -170,12 +168,13 @@ const SingleItem = ({ item }: { item: Product }) => {
           </button>
 
           <button
-            onClick={() => {
-              handleItemToWishList();
-            }}
-            aria-label="button for add to fav"
+            type="button"
+            onClick={handleItemToWishList}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             id="addFavOne"
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 text-dark bg-white hover:text-white hover:bg-blue"
+            className={`flex items-center justify-center w-9 h-9 rounded-[5px] shadow-1 ease-out duration-200 ${
+              isWishlisted ? "text-white bg-pink" : "text-dark bg-white hover:text-pink"
+            }`}
           >
             <svg
               className="fill-current"

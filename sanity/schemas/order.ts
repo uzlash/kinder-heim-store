@@ -13,6 +13,13 @@ export default defineType({
       readOnly: true,
     }),
     defineField({
+      name: 'brand',
+      title: 'Brand',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      description: 'Which brand this order belongs to (HEIM or Kinder). Used to filter orders in the back office.',
+    }),
+    defineField({
       name: 'customer',
       title: 'Customer',
       type: 'reference',
@@ -242,12 +249,13 @@ export default defineType({
       customerName: 'customerName',
       total: 'total',
       status: 'status',
+      brandName: 'brand.name',
     },
     prepare(selection) {
-      const { orderNumber, customerName, total, status } = selection
+      const { orderNumber, customerName, total, status, brandName } = selection
       return {
         title: `Order #${orderNumber}`,
-        subtitle: `${customerName} - $${total} - ${status}`,
+        subtitle: [brandName, customerName, `$${total}`, status].filter(Boolean).join(' · '),
       }
     },
   },

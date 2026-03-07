@@ -1,8 +1,22 @@
 import { client } from './sanity.client'
 
-export async function getAllProducts() {
+/** URL segment (e.g. "kinder") may not match Sanity slug (e.g. "kinder-footware"). Accept both. */
+function getBrandSlugsForQuery(urlBrand: string): string[] {
+  const map: Record<string, string[]> = {
+    kinder: ['kinder', 'kinder-footwear', 'kinder-footware'],
+    heim: ['heim', 'heim-kitchenware'],
+  }
+  const slugs = map[urlBrand.toLowerCase()]
+  return slugs ? [...new Set([urlBrand, ...slugs])] : [urlBrand]
+}
+
+export async function getAllProducts(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "product" && status == "active"] | order(_createdAt desc) {
+    `*[_type == "product" && status == "active"${brandFilter}] | order(_createdAt desc) {
       _id,
       name,
       "slug": slug.current,
@@ -25,14 +39,23 @@ export async function getAllProducts() {
       newArrival,
       status,
       reviews,
-      rating
-    }`
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
+    }`,
+    params,
   )
 }
 
-export async function getProductBySlug(slug: string) {
+export async function getProductBySlug(slug: string, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+
   return client.fetch(
-    `*[_type == "product" && slug.current == $slug][0] {
+    `*[_type == "product" && slug.current == $slug${brandFilter}][0] {
       _id,
       name,
       "slug": slug.current,
@@ -60,84 +83,137 @@ export async function getProductBySlug(slug: string) {
       newArrival,
       status,
       reviews,
-      rating
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
     }`,
-    { slug }
+    { slug, ...(brandSlugs?.length ? { brandSlugs } : {}) },
   )
 }
 
-export async function getFeaturedProducts(limit = 8) {
+export async function getFeaturedProducts(limit = 8, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "product" && featured == true && status == "active"] | order(_createdAt desc) [0...${limit}] {
+    `*[_type == "product" && featured == true && status == "active"${brandFilter}] | order(_createdAt desc) [0...${limit}] {
       _id,
       name,
       "slug": slug.current,
       price,
       comparePrice,
       images,
+      inventory,
       productOfMonth,
       reviews,
-      rating
-    }`
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
+    }`,
+    params,
   )
 }
 
-export async function getBestSellerProducts(limit = 8) {
+export async function getBestSellerProducts(limit = 8, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "product" && bestSeller == true && status == "active"] | order(_createdAt desc) [0...${limit}] {
+    `*[_type == "product" && bestSeller == true && status == "active"${brandFilter}] | order(_createdAt desc) [0...${limit}] {
       _id,
       name,
       "slug": slug.current,
       price,
       comparePrice,
       images,
+      inventory,
       productOfMonth,
       reviews,
-      rating
-    }`
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
+    }`,
+    params,
   )
 }
 
-export async function getNewArrivalProducts(limit = 8) {
+export async function getNewArrivalProducts(limit = 8, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "product" && newArrival == true && status == "active"] | order(_createdAt desc) [0...${limit}] {
+    `*[_type == "product" && newArrival == true && status == "active"${brandFilter}] | order(_createdAt desc) [0...${limit}] {
       _id,
       name,
       "slug": slug.current,
       price,
       comparePrice,
       images,
+      inventory,
       productOfMonth,
       reviews,
-      rating
-    }`
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
+    }`,
+    params,
   )
 }
 
-export async function getProductsByCategory(categorySlug: string) {
+export async function getProductsByCategory(categorySlug: string, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params: any = { categorySlug }
+  if (brandSlugs?.length) params.brandSlugs = brandSlugs
+
   return client.fetch(
-    `*[_type == "product" && category->slug.current == $categorySlug && status == "active"] | order(_createdAt desc) {
+    `*[_type == "product" && category->slug.current == $categorySlug && status == "active"${brandFilter}] | order(_createdAt desc) {
       _id,
       name,
       "slug": slug.current,
       price,
       comparePrice,
       images,
+      inventory,
       category->{
         _id,
         name,
         "slug": slug.current
       },
       reviews,
-      rating
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
     }`,
-    { categorySlug }
+    params,
   )
 }
 
-export async function getAllCategories() {
+export async function getAllCategories(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "category"] | order(order asc) {
+    `*[_type == "category"${brandFilter}] | order(order asc) {
       _id,
       name,
       "slug": slug.current,
@@ -147,25 +223,60 @@ export async function getAllCategories() {
         _id,
         name
       }
-    }`
+    }`,
+    params,
   )
 }
 
-export async function getAllColors() {
+export async function getAllColors(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `array::unique(*[_type == "product" && defined(colors)].colors[].name)`
+    `array::unique(*[_type == "product" && status == "active"${brandFilter} && defined(colors)].colors[].name)`,
+    params,
   )
 }
 
-export async function getAllSizes() {
+export async function getAllSizes(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `array::unique(*[_type == "product" && defined(sizes)].sizes[])`
+    `array::unique(*[_type == "product" && status == "active"${brandFilter} && defined(sizes)].sizes[])`,
+    params,
   )
 }
 
-export async function searchProducts(query: string) {
+/** Min and max price across active products (optionally for a brand). Used for price filter bounds. */
+export async function getPriceBounds(brandSlug?: string): Promise<{ min: number; max: number }> {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
+  const [minDoc, maxDoc] = await Promise.all([
+    client.fetch<{ price: number } | null>(
+      `*[_type == "product" && status == "active"${brandFilter}] | order(price asc)[0]{ price }`,
+      params,
+    ),
+    client.fetch<{ price: number } | null>(
+      `*[_type == "product" && status == "active"${brandFilter}] | order(price desc)[0]{ price }`,
+      params,
+    ),
+  ])
+  const min = minDoc?.price ?? 0
+  const max = maxDoc?.price ?? (min || 1000)
+  return { min, max }
+}
+
+export async function searchProducts(query: string, brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+
   return client.fetch(
-    `*[_type == "product" && status == "active" && (
+    `*[_type == "product" && status == "active"${brandFilter} && (
       name match $query ||
       description match $query ||
       sku match $query
@@ -176,10 +287,19 @@ export async function searchProducts(query: string) {
       price,
       comparePrice,
       images,
+      inventory,
       reviews,
-      rating
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
     }`,
-    { query: `*${query}*` }
+    {
+      query: `*${query}*`,
+      ...(brandSlugs?.length ? { brandSlugs } : {}),
+    },
   )
 }
 
@@ -192,8 +312,9 @@ export async function getFilteredProducts(filters: {
   search?: string;
   page?: number;
   limit?: number;
+  brand?: string;
 }) {
-  const { category, minPrice, maxPrice, color, size, search, page = 1, limit = 20 } = filters;
+  const { category, minPrice, maxPrice, color, size, search, brand, page = 1, limit = 20 } = filters;
   const start = (page - 1) * limit;
   const end = start + limit;
   
@@ -204,6 +325,12 @@ export async function getFilteredProducts(filters: {
   if (search) {
     baseQuery += ` && (name match $search || description match $search || sku match $search)`;
     params.search = `*${search}*`;
+  }
+
+  if (brand) {
+    const brandSlugs = getBrandSlugsForQuery(brand);
+    baseQuery += ` && brand->slug.current in $brandSlugs`;
+    params.brandSlugs = brandSlugs;
   }
 
   if (category) {
@@ -258,7 +385,12 @@ export async function getFilteredProducts(filters: {
       newArrival,
       status,
       reviews,
-      rating
+      rating,
+      brand->{
+        _id,
+        name,
+        "slug": slug.current
+      }
     },
     "total": count(${baseQuery})
   }`;
@@ -289,9 +421,13 @@ export async function getCustomerOrders(email: string) {
   )
 }
 
-export async function getSiteSettings() {
+export async function getSiteSettings(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "siteSettings"][0] {
+    `*[_type == "siteSettings"${brandFilter}][0] {
       storeName,
       logo,
       contactEmail,
@@ -302,7 +438,8 @@ export async function getSiteSettings() {
       shippingMethods,
       taxRate,
       currency
-    }`
+    }`,
+    params,
   )
 }
 
@@ -319,9 +456,13 @@ export async function getTestimonials() {
 }
 
 /** Homepage hero: main carousel + 2 small cards. Products are resolved. */
-export async function getHomePageHero() {
+export async function getHomePageHero(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "homePage"][0] {
+    `*[_type == "homePage"${brandFilter}][0] {
       "heroCarousel": heroCarousel[]->{
         _id,
         name,
@@ -477,6 +618,7 @@ export async function getHomePageHero() {
         rating
       },
       countdownDeadline
-    }`
+    }`,
+    params,
   )
 }

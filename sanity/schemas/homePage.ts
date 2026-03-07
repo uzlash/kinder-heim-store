@@ -4,8 +4,17 @@ export default defineType({
   name: 'homePage',
   title: 'Homepage',
   type: 'document',
-  description: 'Configure the homepage hero section. Create only one document. Choose which products appear in the main carousel and the two small hero cards.',
+  description:
+    'Configure the homepage hero section. Create one document per brand (e.g. HEIM, Kinder). Choose which products appear in the main carousel and the two small hero cards.',
   fields: [
+    defineField({
+      name: 'brand',
+      title: 'Brand',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      description: 'Which brand this homepage configuration belongs to.',
+      validation: (Rule) => Rule.required(),
+    }),
     defineField({
       name: 'title',
       title: 'Title',

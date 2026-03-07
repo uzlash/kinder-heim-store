@@ -31,6 +31,7 @@ export function sanityProductToProduct(sanityProduct: SanityProduct): Product {
     policy: sanityProduct.policy,
     whatsappNumber: sanityProduct.whatsappNumber,
     deliveryInfo: sanityProduct.deliveryInfo,
+    stock: sanityProduct.inventory,
   }
 }
 

@@ -1,7 +1,9 @@
-/**
- * Format a number as price with at most 2 decimal places.
- * e.g. 10.5 → "10.50", 10 → "10.00"
- */
 export function formatPrice(amount: number): string {
-  return Number(amount).toFixed(2);
+  const num = Number(amount);
+  if (!Number.isFinite(num)) return "0.00";
+
+  return num.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }

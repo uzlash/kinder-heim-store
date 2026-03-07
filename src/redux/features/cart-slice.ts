@@ -12,6 +12,8 @@ export type CartItem = {
   price: number;
   discountedPrice: number;
   quantity: number;
+  /** Max quantity allowed (from product stock). Used to cap quantity in cart. */
+  stock?: number;
   productOfMonth?: boolean;
   imgs?: {
     thumbnails: string[];
@@ -34,20 +36,25 @@ export const cart = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth } =
+      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth, stock } =
         action.payload;
       const existingItem = state.items.find((item) => sameProduct(item, action.payload));
+      const maxQty = typeof stock === "number" ? Math.max(0, stock) : undefined;
 
       if (existingItem) {
-        existingItem.quantity += quantity;
+        const added = maxQty != null ? Math.min(quantity, maxQty - existingItem.quantity) : quantity;
+        existingItem.quantity += Math.max(0, added);
+        if (maxQty != null) existingItem.stock = maxQty;
       } else {
+        const qty = maxQty != null ? Math.min(quantity, maxQty) : quantity;
         state.items.push({
           id: slug ?? id,
           slug,
           title,
           price,
-          quantity,
+          quantity: Math.max(1, qty),
           discountedPrice,
+          stock: maxQty,
           productOfMonth,
           imgs,
         });
@@ -65,7 +72,10 @@ export const cart = createSlice({
       const existingItem = state.items.find((item) => item.id === id);
 
       if (existingItem) {
-        existingItem.quantity = quantity;
+        const maxQty = existingItem.stock;
+        const clamped =
+          maxQty != null ? Math.min(Math.max(1, quantity), maxQty) : Math.max(1, quantity);
+        existingItem.quantity = clamped;
       }
     },
 

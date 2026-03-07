@@ -63,6 +63,14 @@ export default defineType({
       validation: (Rule) => Rule.min(0),
     }),
     defineField({
+      name: 'brand',
+      title: 'Brand',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      description: 'Select which brand this product belongs to (e.g. HEIM or Kinder Footwear).',
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'category',
       title: 'Category',
       type: 'reference',

@@ -78,86 +78,86 @@ async function seed() {
   console.log('  Deleted.')
 
   // 2. Create Categories
-  console.log('Creating categories...')
-  const categoryIds: string[] = []
+  // console.log('Creating categories...')
+  // const categoryIds: string[] = []
   
-  for (const catName of CATEGORIES) {
-    const slug = catName.toLowerCase().replace(/\s+/g, '-')
-    const newCat = await client.create({
-      _type: 'category',
-      name: catName,
-      slug: { _type: 'slug', current: slug },
-      description: faker.commerce.productDescription(),
-    })
-    categoryIds.push(newCat._id)
-    console.log(`  Created category: ${catName}`)
-  }
+  // for (const catName of CATEGORIES) {
+  //   const slug = catName.toLowerCase().replace(/\s+/g, '-')
+  //   const newCat = await client.create({
+  //     _type: 'category',
+  //     name: catName,
+  //     slug: { _type: 'slug', current: slug },
+  //     description: faker.commerce.productDescription(),
+  //   })
+  //   categoryIds.push(newCat._id)
+  //   console.log(`  Created category: ${catName}`)
+  // }
 
-  // 3. Create Products (with faker images uploaded to Sanity)
-  console.log('Creating products with images...')
-  const products = []
+  // // 3. Create Products (with faker images uploaded to Sanity)
+  // console.log('Creating products with images...')
+  // const products = []
 
-  for (let i = 0; i < 50; i++) {
-    const name = faker.commerce.productName()
-    const price = parseFloat(faker.commerce.price({ min: 20, max: 2000 }))
-    const categoryId = faker.helpers.arrayElement(categoryIds)
+  // for (let i = 0; i < 50; i++) {
+  //   const name = faker.commerce.productName()
+  //   const price = parseFloat(faker.commerce.price({ min: 20, max: 2000 }))
+  //   const categoryId = faker.helpers.arrayElement(categoryIds)
     
-    // Generate random colors
-    const productColors = faker.helpers.arrayElements(COLORS, { min: 1, max: 4 })
+  //   // Generate random colors
+  //   const productColors = faker.helpers.arrayElements(COLORS, { min: 1, max: 4 })
     
-    // Generate random sizes
-    const productSizes = faker.helpers.arrayElements(SIZES, { min: 2, max: 5 })
+  //   // Generate random sizes
+  //   const productSizes = faker.helpers.arrayElements(SIZES, { min: 2, max: 5 })
 
-    // Upload placeholder image from Faker (Picsum) to Sanity
-    const imageUrl = faker.image.urlPicsumPhotos({ width: 800, height: 800 })
-    let imageRef: string
-    try {
-      imageRef = await uploadImageFromUrl(imageUrl)
-    } catch (err) {
-      console.warn(`Image upload failed for product ${i + 1}, using fallback URL:`, (err as Error).message)
-      // Fallback: try generic Picsum URL without seed (still may work)
-      const fallbackUrl = 'https://picsum.photos/800/800'
-      imageRef = await uploadImageFromUrl(fallbackUrl)
-    }
+  //   // Upload placeholder image from Faker (Picsum) to Sanity
+  //   const imageUrl = faker.image.urlPicsumPhotos({ width: 800, height: 800 })
+  //   let imageRef: string
+  //   try {
+  //     imageRef = await uploadImageFromUrl(imageUrl)
+  //   } catch (err) {
+  //     console.warn(`Image upload failed for product ${i + 1}, using fallback URL:`, (err as Error).message)
+  //     // Fallback: try generic Picsum URL without seed (still may work)
+  //     const fallbackUrl = 'https://picsum.photos/800/800'
+  //     imageRef = await uploadImageFromUrl(fallbackUrl)
+  //   }
 
-    const product = {
-      _type: 'product',
-      name,
-      slug: { _type: 'slug', current: faker.helpers.slugify(name).toLowerCase() + '-' + faker.string.alphanumeric(5) },
-      description: faker.commerce.productDescription(),
-      price,
-      comparePrice: faker.datatype.boolean() ? price * 1.2 : undefined,
-      sku: faker.string.alphanumeric(8).toUpperCase(),
-      inventory: faker.number.int({ min: 0, max: 100 }),
-      status: 'active',
-      featured: faker.datatype.boolean({ probability: 0.2 }),
-      bestSeller: faker.datatype.boolean({ probability: 0.1 }),
-      newArrival: faker.datatype.boolean({ probability: 0.3 }),
-      rating: faker.number.int({ min: 1, max: 5 }),
-      reviews: faker.number.int({ min: 0, max: 50 }),
-      category: {
-        _type: 'reference',
-        _ref: categoryId
-      },
-      colors: productColors,
-      sizes: productSizes,
-      tags: [faker.commerce.productAdjective(), faker.commerce.productMaterial()],
-      images: [
-        { _type: 'image', asset: { _type: 'reference', _ref: imageRef } }
-      ],
-    }
+  //   const product = {
+  //     _type: 'product',
+  //     name,
+  //     slug: { _type: 'slug', current: faker.helpers.slugify(name).toLowerCase() + '-' + faker.string.alphanumeric(5) },
+  //     description: faker.commerce.productDescription(),
+  //     price,
+  //     comparePrice: faker.datatype.boolean() ? price * 1.2 : undefined,
+  //     sku: faker.string.alphanumeric(8).toUpperCase(),
+  //     inventory: faker.number.int({ min: 0, max: 100 }),
+  //     status: 'active',
+  //     featured: faker.datatype.boolean({ probability: 0.2 }),
+  //     bestSeller: faker.datatype.boolean({ probability: 0.1 }),
+  //     newArrival: faker.datatype.boolean({ probability: 0.3 }),
+  //     rating: faker.number.int({ min: 1, max: 5 }),
+  //     reviews: faker.number.int({ min: 0, max: 50 }),
+  //     category: {
+  //       _type: 'reference',
+  //       _ref: categoryId
+  //     },
+  //     colors: productColors,
+  //     sizes: productSizes,
+  //     tags: [faker.commerce.productAdjective(), faker.commerce.productMaterial()],
+  //     images: [
+  //       { _type: 'image', asset: { _type: 'reference', _ref: imageRef } }
+  //     ],
+  //   }
 
-    products.push(product)
-    if ((i + 1) % 10 === 0) console.log(`  Prepared ${i + 1}/50 products...`)
-  }
+  //   products.push(product)
+  //   if ((i + 1) % 10 === 0) console.log(`  Prepared ${i + 1}/50 products...`)
+  // }
 
-  // Batch create products
-  const transaction = client.transaction()
-  products.forEach(p => transaction.create(p))
+  // // Batch create products
+  // const transaction = client.transaction()
+  // products.forEach(p => transaction.create(p))
   
-  await transaction.commit()
+  // await transaction.commit()
   
-  console.log(`✅ Successfully created ${products.length} products with images!`)
+  // console.log(`✅ Successfully created ${products.length} products with images!`)
 }
 
 seed().catch((err) => {

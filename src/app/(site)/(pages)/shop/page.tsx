@@ -1,6 +1,6 @@
 import React from "react";
 import ShopWithSidebar from "@/components/ShopWithSidebar";
-import { getFilteredProducts, getAllCategories, getAllColors, getAllSizes } from "@/lib/sanity.queries";
+import { getFilteredProducts, getAllCategories, getAllColors, getAllSizes, getPriceBounds } from "@/lib/sanity.queries";
 import { sanityProductsToProducts, sanityCategoriesToCategories } from "@/lib/sanityHelpers";
 
 import { Metadata } from "next";
@@ -26,7 +26,7 @@ const ShopWithSidebarPage = async ({ searchParams }: Props) => {
   const page = typeof resolvedSearchParams.page === 'string' ? parseInt(resolvedSearchParams.page) : 1;
   const limit = 20;
 
-  const [data, categories, colors, sizes] = await Promise.all([
+  const [data, categories, colors, sizes, priceBounds] = await Promise.all([
     getFilteredProducts({
       search,
       category,
@@ -39,7 +39,8 @@ const ShopWithSidebarPage = async ({ searchParams }: Props) => {
     }),
     getAllCategories(),
     getAllColors(),
-    getAllSizes()
+    getAllSizes(),
+    getPriceBounds(),
   ]);
   
   const products = sanityProductsToProducts(data.products || []);
@@ -55,6 +56,7 @@ const ShopWithSidebarPage = async ({ searchParams }: Props) => {
         totalProducts={data.total}
         currentPage={page}
         productsPerPage={limit}
+        priceBounds={priceBounds}
       />
     </main>
   );

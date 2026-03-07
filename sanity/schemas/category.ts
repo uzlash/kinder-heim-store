@@ -22,6 +22,13 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'brand',
+      title: 'Brand (optional)',
+      type: 'reference',
+      to: [{ type: 'brand' }],
+      description: 'Attach this category to a specific brand when needed. Leave empty for global categories.',
+    }),
+    defineField({
       name: 'description',
       title: 'Description',
       type: 'text',
