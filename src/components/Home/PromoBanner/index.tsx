@@ -33,17 +33,26 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2, brand }: PromoBannerPr
     <section className="overflow-hidden py-20">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
         {bigCard && (
-          <div className="relative z-1 overflow-hidden rounded-lg bg-[#F5F5F7] py-12.5 lg:py-17.5 xl:py-22.5 px-4 sm:px-7.5 lg:px-14 xl:px-19 mb-7.5">
-            <div className="max-w-[550px] w-full">
-              <span className="block font-medium text-xl text-dark mb-3">
+          <div className="relative min-h-[220px] sm:min-h-[260px] overflow-hidden rounded-lg bg-[#F5F5F7] py-12.5 lg:py-17.5 xl:py-22.5 px-4 sm:px-7.5 lg:px-14 xl:px-19 mb-7.5">
+            {bigImg && (
+              <Image
+                src={bigImg}
+                alt={bigCard.title}
+                className="absolute bottom-0 right-0 w-[45%] max-w-[180px] sm:max-w-[220px] lg:w-auto lg:max-w-none lg:right-26 h-auto object-contain object-right-bottom z-0"
+                width={274}
+                height={350}
+              />
+            )}
+            <div className="relative z-[2] max-w-[550px] w-full">
+              <span className="block font-medium text-lg sm:text-xl text-dark mb-3 truncate">
                 {bigCard.title}
               </span>
               {discountPercent(bigCard) != null && (
-                <h2 className="font-bold text-xl lg:text-heading-4 xl:text-heading-3 text-dark mb-5">
+                <h2 className="font-bold text-lg sm:text-xl lg:text-heading-4 xl:text-heading-3 text-dark mb-5">
                   UP TO {discountPercent(bigCard)}% OFF
                 </h2>
               )}
-              <p className="text-dark">
+              <p className="text-dark text-custom-sm sm:text-base">
                 From ₦{formatPrice(bigCard.discountedPrice)}
                 {bigCard.price > bigCard.discountedPrice && (
                   <span className="line-through ml-1">₦{formatPrice(bigCard.price)}</span>
@@ -56,36 +65,27 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2, brand }: PromoBannerPr
                 Buy Now
               </Link>
             </div>
-            {bigImg && (
-              <Image
-                src={bigImg}
-                alt={bigCard.title}
-                className="absolute bottom-0 right-4 lg:right-26 -z-1"
-                width={274}
-                height={350}
-              />
-            )}
           </div>
         )}
 
         <div className="grid gap-7.5 grid-cols-1 lg:grid-cols-2">
           {mediumCard1 && (
-            <div className="relative z-1 overflow-hidden rounded-lg bg-[#DBF4F3] py-10 xl:py-16 px-4 sm:px-7.5 xl:px-10">
+            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-[#DBF4F3] py-10 xl:py-16 px-4 sm:px-7.5 xl:px-10">
               {med1Img && (
                 <Image
                   src={med1Img}
                   alt={mediumCard1.title}
-                  className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-10 -z-1"
+                  className="absolute top-1/2 -translate-y-1/2 left-0 w-[40%] max-w-[140px] sm:max-w-[180px] lg:w-[241px] lg:max-w-none h-auto object-contain object-left z-0"
                   width={241}
                   height={241}
                 />
               )}
-              <div className="text-right">
-                <span className="block text-lg text-dark mb-1.5">
+              <div className="relative z-[2] text-right min-w-0">
+                <span className="block text-base sm:text-lg text-dark mb-1.5 truncate">
                   {mediumCard1.title}
                 </span>
                 {discountPercent(mediumCard1) != null && (
-                  <h2 className="font-bold text-xl lg:text-heading-4 text-dark mb-2.5">
+                  <h2 className="font-bold text-lg sm:text-xl lg:text-heading-4 text-dark mb-2.5">
                     Up to {discountPercent(mediumCard1)}% off
                   </h2>
                 )}
@@ -103,26 +103,26 @@ function PromoBanner({ bigCard, mediumCard1, mediumCard2, brand }: PromoBannerPr
           )}
 
           {mediumCard2 && (
-            <div className="relative z-1 overflow-hidden rounded-lg bg-[#FFECE1] py-10 xl:py-16 px-4 sm:px-7.5 xl:px-10">
+            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-[#FFECE1] py-10 xl:py-16 px-4 sm:px-7.5 xl:px-10">
               {med2Img && (
                 <Image
                   src={med2Img}
                   alt={mediumCard2.title}
-                  className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-8.5 -z-1"
+                  className="absolute top-1/2 -translate-y-1/2 right-0 w-[40%] max-w-[120px] sm:max-w-[160px] lg:w-[200px] lg:max-w-none h-auto object-contain object-right z-0"
                   width={200}
                   height={200}
                 />
               )}
-              <div>
-                <span className="block text-lg text-dark mb-1.5">
+              <div className="relative z-[2] min-w-0 max-w-[60%] sm:max-w-[285px]">
+                <span className="block text-base sm:text-lg text-dark mb-1.5 truncate">
                   {mediumCard2.title}
                 </span>
                 {discountPercent(mediumCard2) != null && (
-                  <h2 className="font-bold text-xl lg:text-heading-4 text-dark mb-2.5">
+                  <h2 className="font-bold text-lg sm:text-xl lg:text-heading-4 text-dark mb-2.5">
                     Up to <span className="text-orange">{discountPercent(mediumCard2)}%</span> off
                   </h2>
                 )}
-                <p className="max-w-[285px] text-custom-sm text-dark">
+                <p className="text-custom-sm text-dark">
                   ₦{formatPrice(mediumCard2.discountedPrice)}
                   {mediumCard2.price > mediumCard2.discountedPrice && (
                     <span className="line-through ml-1">₦{formatPrice(mediumCard2.price)}</span>

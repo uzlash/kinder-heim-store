@@ -114,6 +114,14 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
         pages={["Shop"]}
       />
       <section className="overflow-hidden relative pb-20 pt-5 lg:pt-20 xl:pt-28 bg-[#f3f4f6]">
+        {/* Backdrop for mobile when filters open */}
+        <div
+          className={`xl:hidden fixed inset-0 z-[9998] bg-dark/40 transition-opacity ${
+            productSidebar ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          aria-hidden
+          onClick={() => setProductSidebar(false)}
+        />
         <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex gap-7.5">
             {/* <!-- Sidebar Start --> */}
@@ -209,6 +217,17 @@ const ShopWithSidebar = ({ initialProducts, categories, colors, sizes, totalProd
                 <div className="flex items-center justify-between">
                   {/* <!-- top bar left --> */}
                   <div className="flex flex-wrap items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setProductSidebar(true)}
+                      className="xl:hidden flex items-center gap-2 py-2 px-3 rounded-md border border-gray-3 bg-white text-dark text-custom-sm font-medium hover:bg-gray-1"
+                      aria-label="Open filters"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="fill-current">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M3 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zm3 6a1 1 0 011-1h10a1 1 0 110 2H7a1 1 0 01-1-1zm3 6a1 1 0 011-1h4a1 1 0 110 2h-4a1 1 0 01-1-1z" fill="currentColor" />
+                      </svg>
+                      Filters
+                    </button>
                     <CustomSelect options={options} />
 
                     <p>
