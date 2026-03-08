@@ -5,19 +5,13 @@ import { formatPrice } from "@/lib/formatPrice";
 
 const SingleOrder = ({ orderItem, smallView }: any) => {
   const [showDetails, setShowDetails] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
 
   const toggleDetails = () => {
     setShowDetails(!showDetails);
   };
 
-  const toggleEdit = () => {
-    setShowEdit(!showEdit);
-  };
-
-  const toggleModal = (status: boolean) => {
-    setShowDetails(status);
-    setShowEdit(status);
+  const toggleModal = (open: boolean) => {
+    setShowDetails(open);
   };
 
   return (
@@ -58,14 +52,11 @@ const SingleOrder = ({ orderItem, smallView }: any) => {
           </div>
 
           <div className="min-w-[113px]">
-            <p className="text-custom-sm text-dark">${formatPrice(orderItem.total)}</p>
+            <p className="text-custom-sm text-dark">₦{formatPrice(orderItem.total)}</p>
           </div>
 
           <div className="flex gap-5 items-center">
-            <OrderActions
-              toggleDetails={toggleDetails}
-              toggleEdit={toggleEdit}
-            />
+            <OrderActions toggleDetails={toggleDetails} />
           </div>
         </div>
       )}
@@ -115,18 +106,15 @@ const SingleOrder = ({ orderItem, smallView }: any) => {
 
             <div className="">
               <p className="text-custom-sm text-dark">
-                <span className="font-bold pr-2">Total:</span> $
-                {orderItem.total}
+                <span className="font-bold pr-2">Total:</span> ₦
+                {formatPrice(orderItem.total)}
               </p>
             </div>
 
             <div className="">
               <p className="text-custom-sm text-dark flex items-center">
                 <span className="font-bold pr-2">Actions:</span>{" "}
-                <OrderActions
-                  toggleDetails={toggleDetails}
-                  toggleEdit={toggleEdit}
-                />
+                <OrderActions toggleDetails={toggleDetails} />
               </p>
             </div>
           </div>
@@ -135,7 +123,6 @@ const SingleOrder = ({ orderItem, smallView }: any) => {
 
       <OrderModal
         showDetails={showDetails}
-        showEdit={showEdit}
         toggleModal={toggleModal}
         order={orderItem}
       />

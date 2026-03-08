@@ -4,7 +4,6 @@ import React, { useState, useMemo } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Login from "./Login";
 import PaymentMethod from "./PaymentMethod";
-import Coupon from "./Coupon";
 import Billing from "./Billing";
 import ShippingMethod, {
   type DeliveryOption,
@@ -268,8 +267,6 @@ const Checkout = ({ siteContactPhone }: CheckoutProps) => {
                     </div>
                   </div>
                 </div>
-
-                <Coupon />
 
                 <ShippingMethod
                   selected={shippingMethod}

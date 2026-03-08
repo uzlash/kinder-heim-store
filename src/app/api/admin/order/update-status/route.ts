@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clientWithToken } from '@/lib/sanity.client'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
+
+const ALLOWED_ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +23,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
+      )
+    }
+
+    if (typeof orderId !== 'string' || !ALLOWED_ORDER_STATUSES.includes(status)) {
+      return NextResponse.json(
+        { error: 'Invalid orderId or status' },
+        { status: 400 }
+      )
+    }
+
+    // Verify the document exists and is an order before patching
+    const existing = await clientWithToken.fetch<{ _id: string } | null>(
+      `*[_type == "order" && _id == $orderId][0]{ _id }`,
+      { orderId }
+    )
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Order not found' },
+        { status: 404 }
       )
     }
 

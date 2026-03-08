@@ -23,12 +23,12 @@ export const sendOrderConfirmationEmail = async (order: any) => {
         <ul>
           ${order.items.map((item: any) => `
             <li>
-              ${item.productName} x ${item.quantity} - $${formatPrice(item.price)}
+              ${item.productName} x ${item.quantity} - ₦${formatPrice(item.price)}
             </li>
           `).join('')}
         </ul>
         
-        <p><strong>Total: $${formatPrice(order.total)}</strong></p>
+        <p><strong>Total: ₦${formatPrice(order.total)}</strong></p>
         
         <p>We will notify you when your order is shipped.</p>
       `,

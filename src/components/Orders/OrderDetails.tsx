@@ -1,4 +1,5 @@
 import React from "react";
+import { formatPrice } from "@/lib/formatPrice";
 
 const OrderDetails = ({ orderItem }: any) => {
   return (
@@ -62,7 +63,7 @@ const OrderDetails = ({ orderItem }: any) => {
 
         <div className="min-w-[113px]">
           <p className="text-custom-sm text-dark">
-            {typeof orderItem.total === "number" ? `₦${orderItem.total?.toLocaleString()}` : orderItem.total}
+            {typeof orderItem.total === "number" ? `₦${formatPrice(orderItem.total)}` : orderItem.total}
           </p>
         </div>
       </div>

@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clientWithToken } from '@/lib/sanity.client'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { sendOrderConfirmationEmail } from '@/lib/email'
+
+// Server-side shipping fees (must match frontend ShippingMethod.tsx)
+const DELIVERY_FEES = { store_pickup: 0, abuja: 5000, interstate: 7000 }
+const INTERSTATE_ZONES: { value: string; fee: number }[] = [
+  { value: 'northwest', fee: 7000 }, { value: 'northeast', fee: 7000 },
+  { value: 'northcentral', fee: 7000 }, { value: 'southwest', fee: 7000 },
+  { value: 'southeast', fee: 7000 }, { value: 'southsouth', fee: 7000 },
+  { value: 'other', fee: 0 },
+]
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const body = await request.json()
-    const { items, shippingAddress, shippingMethod, total, subtotal, shippingCost, email, name, phone, notes } = body
+    const { items, shippingAddress, shippingMethod, interstateZone, email, name, phone, notes } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -17,18 +26,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate stock and resolve each item to Sanity product _id (for order references)
+    // Validate stock, resolve to Sanity product _id, and get server-side price + productOfMonth
     const productIdByItemKey: string[] = []
+    const resolvedProducts: { _id: string; price: number; productOfMonth?: boolean }[] = []
     for (const item of items) {
       const idParam = item.id || item._id
       let product = await clientWithToken.fetch(
-        `*[_type == "product" && _id == $id][0] { inventory, name, _id }`,
+        `*[_type == "product" && _id == $id][0] { inventory, name, _id, price, productOfMonth }`,
         { id: idParam }
       )
       if (!product && (item.slug || (typeof idParam === 'string' && !idParam.startsWith('product-') && idParam.length < 50))) {
         const slug = item.slug || idParam
         product = await clientWithToken.fetch(
-          `*[_type == "product" && slug.current == $slug][0] { inventory, name, _id }`,
+          `*[_type == "product" && slug.current == $slug][0] { inventory, name, _id, price, productOfMonth }`,
           { slug }
         )
       }
@@ -47,7 +57,34 @@ export async function POST(request: NextRequest) {
         )
       }
       productIdByItemKey.push(product._id)
+      resolvedProducts.push({
+        _id: product._id,
+        price: Number(product.price) ?? 0,
+        productOfMonth: Boolean(product.productOfMonth),
+      })
     }
+
+    // Recompute subtotal from server-side prices (ignore client-supplied totals)
+    const serverSubtotal = resolvedProducts.reduce(
+      (sum, p, i) => sum + p.price * (items[i].quantity || 0),
+      0
+    )
+
+    // Recompute shipping and total
+    const method = shippingMethod === 'store_pickup' || shippingMethod === 'abuja' || shippingMethod === 'interstate'
+      ? shippingMethod
+      : 'store_pickup'
+    const hasProductOfMonth = resolvedProducts.some((p) => p.productOfMonth)
+    const freeAbujaDelivery = method === 'abuja' && hasProductOfMonth && items.length >= 3
+    const serverShippingCost =
+      method === 'store_pickup'
+        ? 0
+        : freeAbujaDelivery
+          ? 0
+          : method === 'abuja'
+            ? DELIVERY_FEES.abuja
+            : INTERSTATE_ZONES.find((z) => z.value === (interstateZone || 'northwest'))?.fee ?? DELIVERY_FEES.interstate
+    const serverTotal = serverSubtotal + serverShippingCost
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`
@@ -105,15 +142,15 @@ export async function POST(request: NextRequest) {
         },
         productName: item.title,
         quantity: item.quantity,
-        price: item.discountedPrice || item.price,
+        price: resolvedProducts[index].price,
         color: item.color,
         size: item.size,
       })),
       shippingAddress: sanitizedShippingAddress,
-      shippingMethod,
-      subtotal,
-      shippingCost,
-      total,
+      shippingMethod: method,
+      subtotal: serverSubtotal,
+      shippingCost: serverShippingCost,
+      total: serverTotal,
       status: 'pending',
       paymentStatus: 'pending',
       notes: notes ? String(notes).trim() : undefined,
@@ -128,23 +165,23 @@ export async function POST(request: NextRequest) {
         .commit()
     }
 
-    // Update customer stats
+    // Update customer stats (use server-computed total)
     await clientWithToken
       .patch(customerId)
-      .inc({ totalOrders: 1, totalSpent: total })
+      .inc({ totalOrders: 1, totalSpent: serverTotal })
       .commit()
 
-    // Send confirmation email
+    // Send confirmation email (use server-computed totals)
     await sendOrderConfirmationEmail({
       orderNumber,
       customerEmail: email,
       customerName: name,
-      items: items.map((item: any) => ({
+      items: items.map((item: any, index: number) => ({
         productName: item.title,
         quantity: item.quantity,
-        price: item.discountedPrice || item.price,
+        price: resolvedProducts[index].price,
       })),
-      total,
+      total: serverTotal,
     });
 
     return NextResponse.json(
