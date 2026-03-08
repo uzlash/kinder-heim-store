@@ -8,7 +8,7 @@ export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: false,
+  useCdn: true, // CDN for read-only product/category data; reduces origin load
 })
 
 export const clientWithToken = createClient({

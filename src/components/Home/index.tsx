@@ -1,14 +1,16 @@
+"use client";
+
 import React from "react";
-import Hero from "./Hero";
-import Categories from "./Categories";
+import dynamic from "next/dynamic";
 import NewArrival from "./NewArrivals";
 import PromoBanner from "./PromoBanner";
-import type { PromoBannerProps } from "./PromoBanner";
 import CounDown from "./Countdown";
-import type { CounDownProps } from "./Countdown";
 import BestSeller from "./BestSeller";
-import Testimonials from "./Testimonials";
 import Newsletter from "../Common/Newsletter";
+
+const Hero = dynamic(() => import("./Hero"), { ssr: false, loading: () => <div className="min-h-[400px] bg-gray-1 animate-pulse" /> });
+const Categories = dynamic(() => import("./Categories"), { ssr: false, loading: () => <div className="min-h-[200px] bg-gray-1 animate-pulse" /> });
+const Testimonials = dynamic(() => import("./Testimonials"), { ssr: false, loading: () => <div className="min-h-[280px] bg-gray-1 animate-pulse" /> });
 import { Product } from "@/types/product";
 import { Category } from "@/types/category";
 import { Testimonial } from "@/types/testimonial";
