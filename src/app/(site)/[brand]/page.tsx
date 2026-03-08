@@ -46,7 +46,7 @@ export default async function BrandHomePage({ params }: Props) {
       getBestSellerProducts(6, brandSlug),
       getFeaturedProducts(8, brandSlug),
       getAllCategories(brandSlug),
-      getTestimonials(),
+      getTestimonials(brandSlug),
       getHomePageHero(brandSlug),
     ]);
 

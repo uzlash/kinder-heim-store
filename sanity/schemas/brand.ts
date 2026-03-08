@@ -51,7 +51,6 @@ export default defineType({
       name: 'about',
       title: 'About / Tagline',
       type: 'text',
-      rows: 3,
     }),
     defineField({
       name: 'instagram',

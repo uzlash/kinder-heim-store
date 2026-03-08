@@ -462,15 +462,18 @@ export async function getSiteSettings(brandSlug?: string) {
   )
 }
 
-export async function getTestimonials() {
+export async function getTestimonials(brandSlug?: string) {
+  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
+  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
+  const params = brandSlugs?.length ? { brandSlugs } : {}
+
   return client.fetch(
-    `*[_type == "testimonial"] {
+    `*[_type == "testimonial"${brandFilter}] | order(_createdAt desc) {
       _id,
-      authorName,
-      authorRole,
-      authorImg,
-      review
-    }`
+      screenshot,
+      caption
+    }`,
+    params,
   )
 }
 

@@ -11,6 +11,7 @@ import SingleItem from "./SingleItem";
 
 const Testimonials = ({ testimonials }: { testimonials: Testimonial[] }) => {
   const sliderRef = useRef(null);
+  const validTestimonials = testimonials.filter((t) => t.screenshotUrl);
 
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return;
@@ -21,6 +22,8 @@ const Testimonials = ({ testimonials }: { testimonials: Testimonial[] }) => {
     if (!sliderRef.current) return;
     sliderRef.current.swiper.slideNext();
   }, []);
+
+  if (validTestimonials.length === 0) return null;
 
   return (
     <section className="overflow-hidden pb-16.5">
@@ -37,10 +40,10 @@ const Testimonials = ({ testimonials }: { testimonials: Testimonial[] }) => {
                     width={17}
                     height={17}
                   />
-                  Testimonials
+                  WhatsApp reviews
                 </span>
                 <h2 className="font-semibold text-xl xl:text-heading-5 text-dark">
-                  User Feedbacks
+                  What our customers say
                 </h2>
               </div>
 
@@ -85,28 +88,26 @@ const Testimonials = ({ testimonials }: { testimonials: Testimonial[] }) => {
 
             <Swiper
               ref={sliderRef}
+              autoHeight
               slidesPerView={3}
               spaceBetween={20}
               breakpoints={{
-                // when window width is >= 640px
                 0: {
                   slidesPerView: 1,
                 },
                 1000: {
                   slidesPerView: 2,
-                  // spaceBetween: 4,
                 },
-                // when window width is >= 768px
                 1200: {
                   slidesPerView: 3,
                 },
               }}
             >
-              {testimonials.map((item, key) => (
-                <SwiperSlide key={key}>
-                  <SingleItem testimonial={item} />
-                </SwiperSlide>
-              ))}
+              {validTestimonials.map((item, key) => (
+                  <SwiperSlide key={item.id ?? key}>
+                    <SingleItem testimonial={item} />
+                  </SwiperSlide>
+                ))}
             </Swiper>
           </div>
         </div>

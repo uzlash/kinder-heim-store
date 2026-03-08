@@ -3,59 +3,25 @@ import { Testimonial } from "@/types/testimonial";
 import Image from "next/image";
 
 const SingleItem = ({ testimonial }: { testimonial: Testimonial }) => {
+  if (!testimonial.screenshotUrl) return null;
+
   return (
-    <div className="shadow-testimonial bg-white rounded-[10px] py-7.5 px-4 sm:px-8.5 m-1">
-      <div className="flex items-center gap-1 mb-5">
+    <div className="flex flex-col w-full">
+      <div className="relative w-full rounded-[10px] overflow-hidden bg-gray-1">
         <Image
-          src="/images/icons/icon-star.svg"
-          alt="star icon"
-          width={15}
-          height={15}
-        />
-        <Image
-          src="/images/icons/icon-star.svg"
-          alt="star icon"
-          width={15}
-          height={15}
-        />
-        <Image
-          src="/images/icons/icon-star.svg"
-          alt="star icon"
-          width={15}
-          height={15}
-        />
-        <Image
-          src="/images/icons/icon-star.svg"
-          alt="star icon"
-          width={15}
-          height={15}
-        />
-        <Image
-          src="/images/icons/icon-star.svg"
-          alt="star icon"
-          width={15}
-          height={15}
+          src={testimonial.screenshotUrl}
+          alt={testimonial.caption || "WhatsApp chat testimonial"}
+          width={600}
+          height={800}
+          className="w-full h-auto block"
+          sizes="(max-width: 768px) 100vw, 33vw"
         />
       </div>
-
-      <p className="text-dark mb-6">{testimonial.review}</p>
-
-      <a href="#" className="flex items-center gap-4">
-        <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
-          <Image
-            src={testimonial.authorImg}
-            alt="author"
-            className="w-12.5 h-12.5 rounded-full overflow-hidden"
-            width={50}
-            height={50}
-          />
-        </div>
-
-        <div>
-          <h3 className="font-medium text-dark">{testimonial.authorName}</h3>
-          <p className="text-custom-sm">{testimonial.authorRole}</p>
-        </div>
-      </a>
+      {testimonial.caption && (
+        <p className="text-custom-sm text-dark-5 mt-2 text-center w-full">
+          {testimonial.caption}
+        </p>
+      )}
     </div>
   );
 };

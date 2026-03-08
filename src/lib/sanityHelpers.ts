@@ -54,10 +54,8 @@ export function sanityCategoriesToCategories(sanityCategories: SanityCategory[])
 export function sanityTestimonialToTestimonial(sanityTestimonial: SanityTestimonial): Testimonial {
   return {
     id: sanityTestimonial._id,
-    review: sanityTestimonial.review,
-    authorName: sanityTestimonial.authorName,
-    authorRole: sanityTestimonial.authorRole,
-    authorImg: sanityTestimonial.authorImg ? urlFor(sanityTestimonial.authorImg).width(100).height(100).url() : '',
+    screenshotUrl: sanityTestimonial.screenshot ? urlFor(sanityTestimonial.screenshot).width(1200).url() : '',
+    caption: sanityTestimonial.caption,
   }
 }
 

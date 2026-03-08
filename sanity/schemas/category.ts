@@ -27,12 +27,11 @@ export default defineType({
       type: 'reference',
       to: [{ type: 'brand' }],
       description: 'Attach this category to a specific brand when needed. Leave empty for global categories.',
-    }),
+    } as Parameters<typeof defineField>[0]),
     defineField({
       name: 'description',
       title: 'Description',
       type: 'text',
-      rows: 3,
     }),
     defineField({
       name: 'image',
@@ -48,7 +47,7 @@ export default defineType({
       type: 'reference',
       to: [{ type: 'category' }],
       description: 'Leave empty for top-level categories',
-    }),
+    } as Parameters<typeof defineField>[0]),
     defineField({
       name: 'order',
       title: 'Display Order',

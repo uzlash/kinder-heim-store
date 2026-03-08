@@ -87,8 +87,6 @@ export interface SiteSettings {
 
 export interface SanityTestimonial {
   _id: string
-  authorName: string
-  authorRole: string
-  authorImg: SanityImage
-  review: string
+  screenshot: SanityImage
+  caption?: string
 }
