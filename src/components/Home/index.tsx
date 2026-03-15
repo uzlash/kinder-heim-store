@@ -3,9 +3,9 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import NewArrival from "./NewArrivals";
+import Featured from "./Featured";
 import PromoBanner from "./PromoBanner";
 import CounDown from "./Countdown";
-import BestSeller from "./BestSeller";
 import Newsletter from "../Common/Newsletter";
 
 const Hero = dynamic(() => import("./Hero"), { ssr: false, loading: () => <div className="min-h-[400px] bg-gray-1 animate-pulse" /> });
@@ -17,7 +17,6 @@ import { Testimonial } from "@/types/testimonial";
 
 interface HomeProps {
   newArrivals: Product[];
-  bestSellers: Product[];
   featured: Product[];
   categories: Category[];
   testimonials: Testimonial[];
@@ -32,7 +31,7 @@ interface HomeProps {
   brand?: string;
 }
 
-const Home = ({ newArrivals, bestSellers, featured, categories, testimonials, heroCarousel = [], heroSmallCard1 = null, heroSmallCard2 = null, promoBig = null, promoMedium1 = null, promoMedium2 = null, countdownProduct = null, countdownDeadline = null, brand }: HomeProps) => {
+const Home = ({ newArrivals, featured, categories, testimonials, heroCarousel = [], heroSmallCard1 = null, heroSmallCard2 = null, promoBig = null, promoMedium1 = null, promoMedium2 = null, countdownProduct = null, countdownDeadline = null, brand }: HomeProps) => {
   return (
     <main>
       <Hero
@@ -42,6 +41,7 @@ const Home = ({ newArrivals, bestSellers, featured, categories, testimonials, he
         brand={brand}
       />
       <Categories categories={categories} brand={brand} />
+      <Featured products={featured} brand={brand} />
       <NewArrival products={newArrivals} brand={brand} />
       <PromoBanner
         bigCard={promoBig}
@@ -49,7 +49,6 @@ const Home = ({ newArrivals, bestSellers, featured, categories, testimonials, he
         mediumCard2={promoMedium2}
         brand={brand}
       />
-      <BestSeller products={bestSellers} brand={brand} />
       <CounDown
         product={countdownProduct}
         deadline={countdownDeadline}

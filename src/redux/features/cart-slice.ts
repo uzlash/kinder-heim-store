@@ -23,13 +23,15 @@ export type CartItem = {
   color?: string;
   /** Selected size (for order and Sanity). */
   size?: string;
+  /** Brand slug when item was added (e.g. "heim", "kinder"). Used for brand-aware Order via WhatsApp. */
+  brandSlug?: string;
 };
 
 const initialState: InitialState = {
   items: [],
 };
 
-/** Same line = same product + same color + same size (so different color/size = separate line) */
+/** Same line = same product + same color + same size + same brand */
 function sameProduct(a: CartItem, payload: CartItem): boolean {
   const sameId = (a.slug && payload.slug && a.slug === payload.slug) || a.id === payload.id;
   if (!sameId) return false;
@@ -37,7 +39,9 @@ function sameProduct(a: CartItem, payload: CartItem): boolean {
   const pColor = payload.color ?? "";
   const aSize = a.size ?? "";
   const pSize = payload.size ?? "";
-  return aColor === pColor && aSize === pSize;
+  const aBrand = a.brandSlug ?? "";
+  const pBrand = payload.brandSlug ?? "";
+  return aColor === pColor && aSize === pSize && aBrand === pBrand;
 }
 
 export const cart = createSlice({
@@ -45,7 +49,7 @@ export const cart = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth, stock, color, size } =
+      const { id, slug, title, price, quantity, discountedPrice, imgs, productOfMonth, stock, color, size, brandSlug } =
         action.payload;
       const existingItem = state.items.find((item) => sameProduct(item, action.payload));
       const maxQty = typeof stock === "number" ? Math.max(0, stock) : undefined;
@@ -54,6 +58,7 @@ export const cart = createSlice({
         const added = maxQty != null ? Math.min(quantity, maxQty - existingItem.quantity) : quantity;
         existingItem.quantity += Math.max(0, added);
         if (maxQty != null) existingItem.stock = maxQty;
+        if (brandSlug != null) existingItem.brandSlug = brandSlug;
       } else {
         const qty = maxQty != null ? Math.min(quantity, maxQty) : quantity;
         state.items.push({
@@ -68,6 +73,7 @@ export const cart = createSlice({
           imgs,
           color,
           size,
+          brandSlug,
         });
       }
     },

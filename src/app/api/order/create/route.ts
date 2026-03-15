@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
     for (const item of items) {
       const idParam = item.id || item._id
       let product = await clientWithToken.fetch(
-        `*[_type == "product" && _id == $id][0] { inventory, name, _id, price, productOfMonth }`,
+        `*[_type == "product" && _id == $id][0] { inventory, name, _id, price, productOfMonth, "sizeVariants": sizeVariants[]{ label, price } }`,
         { id: idParam }
       )
       if (!product && (item.slug || (typeof idParam === 'string' && !idParam.startsWith('product-') && idParam.length < 50))) {
         const slug = item.slug || idParam
         product = await clientWithToken.fetch(
-          `*[_type == "product" && slug.current == $slug][0] { inventory, name, _id, price, productOfMonth }`,
+          `*[_type == "product" && slug.current == $slug][0] { inventory, name, _id, price, productOfMonth, "sizeVariants": sizeVariants[]{ label, price } }`,
           { slug }
         )
       }
@@ -56,10 +56,23 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+
+      // For products with per-variant pricing, resolve the price from the matching sizeVariant
+      let resolvedPrice = Number(product.price) ?? 0
+      const sizeVariants: Array<{ label: string; price: number }> = product.sizeVariants ?? []
+      if (sizeVariants.length > 0 && item.size) {
+        const matchedVariant = sizeVariants.find(
+          (sv: { label: string; price: number }) => sv.label === item.size
+        )
+        if (matchedVariant) {
+          resolvedPrice = Number(matchedVariant.price)
+        }
+      }
+
       productIdByItemKey.push(product._id)
       resolvedProducts.push({
         _id: product._id,
-        price: Number(product.price) ?? 0,
+        price: resolvedPrice,
         productOfMonth: Boolean(product.productOfMonth),
       })
     }

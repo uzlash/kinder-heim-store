@@ -22,16 +22,18 @@ export interface SanityProduct {
     color: { name: string; value: string }
     sizes: string[]
   }>
+  sizeVariants?: Array<{
+    label: string
+    price: number
+    comparePrice?: number
+  }>
   productOfMonth?: boolean
   policy?: string
   deliveryInfo?: string
   tags?: string[]
   featured?: boolean
-  bestSeller?: boolean
   newArrival?: boolean
   status: string
-  reviews?: number
-  rating?: number
 }
 
 export interface SanityImage {

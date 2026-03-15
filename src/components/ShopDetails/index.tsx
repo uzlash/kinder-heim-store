@@ -4,6 +4,7 @@ import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
+import { useBrand } from "@/app/context/BrandContext";
 import { useAppSelector } from "@/redux/store";
 import { Product } from "@/types/product";
 import { useDispatch } from "react-redux";
@@ -22,6 +23,7 @@ const DEFAULT_DELIVERY = "24 hrs max within Abuja. Saturdays for interstate deli
 
 const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsProps) => {
   const { openPreviewModal } = usePreviewSlider();
+  const { brand } = useBrand();
   const [previewImg, setPreviewImg] = useState(0);
   const dispatch = useDispatch();
   const [quantity, setQuantity] = useState(1);
@@ -29,6 +31,9 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
   const [activeColorKey, setActiveColorKey] = useState(0);
   const [activeSize, setActiveSize] = useState("");
+
+  // HEIM-style: size variant with individual price
+  const [activeSizeVariantIdx, setActiveSizeVariantIdx] = useState<number | null>(null);
 
   // Fallback to Redux/LocalStorage if no product prop is provided (backward compatibility)
   const alreadyExist = typeof window !== 'undefined' ? localStorage.getItem("productDetails") : null;
@@ -45,14 +50,25 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
   const variantsWithColor = product?.colorVariants?.filter((v) => v?.color) ?? [];
   const colorOptions = variantsWithColor.map((v) => v.color);
   const availableSizes = variantsWithColor[activeColorKey]?.sizes ?? [];
+
+  const hasSizeVariants = (product?.sizeVariants?.length ?? 0) > 0;
+  const activeSizeVariant =
+    hasSizeVariants && activeSizeVariantIdx !== null
+      ? product!.sizeVariants![activeSizeVariantIdx]
+      : null;
+
+  // Effective price for display and WhatsApp message
+  const effectivePrice = activeSizeVariant?.price ?? product?.discountedPrice ?? 0;
+  const effectiveComparePrice = activeSizeVariant?.comparePrice ?? product?.price ?? 0;
+
   const deliveryText = product?.deliveryInfo ?? DEFAULT_DELIVERY;
   const maxStock = product?.stock ?? Infinity;
   const atMax = quantity >= maxStock;
   const whatsappNumber = siteContactPhone?.trim();
   const phoneDigits = whatsappNumber?.replace(/\D/g, "") ?? "";
-  const lineTotal = product ? product.discountedPrice * quantity : 0;
+  const lineTotal = effectivePrice * quantity;
   const orderMessage = product
-    ? `Hello! I'd like to order:\n${product.title} x${quantity} — ₦${formatPrice(lineTotal)}\n\nTotal: ₦${formatPrice(lineTotal)}`
+    ? `Hello! I'd like to order:\n${product.title}${activeSizeVariant ? ` (${activeSizeVariant.label})` : ""} x${quantity} — ₦${formatPrice(lineTotal)}\n\nTotal: ₦${formatPrice(lineTotal)}`
     : "";
   const whatsappLink =
     phoneDigits && orderMessage
@@ -77,15 +93,30 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
   const handleAddToCart = () => {
     if (!product) return;
-    const selectedColorName = colorOptions[activeColorKey]?.name ?? undefined;
-    dispatch(
-      addItemToCart({
-        ...product,
-        quantity: quantity,
-        color: selectedColorName,
-        size: activeSize || undefined,
-      })
-    );
+    if (hasSizeVariants) {
+      dispatch(
+        addItemToCart({
+          ...product,
+          price: activeSizeVariant!.price,
+          discountedPrice: activeSizeVariant!.price,
+          quantity,
+          size: activeSizeVariant!.label,
+          color: undefined,
+          brandSlug: brand ?? undefined,
+        })
+      );
+    } else {
+      const selectedColorName = colorOptions[activeColorKey]?.name ?? undefined;
+      dispatch(
+        addItemToCart({
+          ...product,
+          quantity,
+          color: selectedColorName,
+          size: activeSize || undefined,
+          brandSlug: brand ?? undefined,
+        })
+      );
+    }
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -247,11 +278,11 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
                   <h3 className="font-medium text-custom-1 mb-4.5">
                     <span className="text-sm sm:text-base text-dark">
-                      ₦{formatPrice(product.discountedPrice)}
+                      ₦{formatPrice(effectivePrice)}
                     </span>
-                    {product.price > product.discountedPrice && (
+                    {effectiveComparePrice > effectivePrice && (
                       <span className="line-through text-dark-4 ml-2">
-                        ₦{formatPrice(product.price)}
+                        ₦{formatPrice(effectiveComparePrice)}
                       </span>
                     )}
                   </h3>
@@ -277,73 +308,106 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
                   <form onSubmit={(e) => e.preventDefault()}>
                     <div className="flex flex-col gap-4.5 border-y border-gray-3 mt-7.5 mb-9 py-9">
-                      {colorOptions.length > 0 && (
-                        <div className="flex items-center gap-4">
-                          <div className="min-w-[65px]">
-                            <h4 className="font-medium text-dark">Color:</h4>
-                          </div>
-                          <div className="flex items-center gap-2.5 flex-wrap">
-                            {colorOptions.map((color, key) => (
+                      {hasSizeVariants ? (
+                        /* HEIM-style: per-variant pricing */
+                        <div>
+                          <h4 className="font-medium text-dark mb-3">Select size / variant:</h4>
+                          <div className="flex flex-col gap-2">
+                            {product.sizeVariants!.map((sv, idx) => (
                               <label
-                                key={key}
-                                htmlFor={`color-${key}`}
-                                className="cursor-pointer select-none flex items-center gap-1.5"
+                                key={idx}
+                                htmlFor={`sv-${idx}`}
+                                className={`cursor-pointer flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors ${
+                                  activeSizeVariantIdx === idx
+                                    ? "border-blue bg-blue/5"
+                                    : "border-gray-3 hover:border-blue"
+                                }`}
                               >
                                 <input
                                   type="radio"
-                                  name="color"
-                                  id={`color-${key}`}
+                                  name="size-variant"
+                                  id={`sv-${idx}`}
                                   className="sr-only"
-                                  checked={activeColorKey === key}
-                                  onChange={() => {
-                                    setActiveColorKey(key);
-                                    setActiveSize("");
-                                  }}
+                                  checked={activeSizeVariantIdx === idx}
+                                  onChange={() => setActiveSizeVariantIdx(idx)}
                                 />
-                                <div
-                                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${activeColorKey === key ? "border-blue" : "border-gray-3"}`}
-                                  style={{ backgroundColor: color?.value ?? "#eee" }}
-                                  title={color?.name}
-                                />
-                                <span className="text-custom-sm text-dark">{color?.name ?? "—"}</span>
+                                <span className="text-sm font-medium text-dark">{sv.label}</span>
+                                <span className="text-sm font-semibold text-blue">₦{formatPrice(sv.price)}</span>
                               </label>
                             ))}
                           </div>
                         </div>
-                      )}
+                      ) : (
+                        <>
+                          {colorOptions.length > 0 && (
+                            <div className="flex items-center gap-4">
+                              <div className="min-w-[65px]">
+                                <h4 className="font-medium text-dark">Color:</h4>
+                              </div>
+                              <div className="flex items-center gap-2.5 flex-wrap">
+                                {colorOptions.map((color, key) => (
+                                  <label
+                                    key={key}
+                                    htmlFor={`color-${key}`}
+                                    className="cursor-pointer select-none flex items-center gap-1.5"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="color"
+                                      id={`color-${key}`}
+                                      className="sr-only"
+                                      checked={activeColorKey === key}
+                                      onChange={() => {
+                                        setActiveColorKey(key);
+                                        setActiveSize("");
+                                      }}
+                                    />
+                                    <div
+                                      className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${activeColorKey === key ? "border-blue" : "border-gray-3"}`}
+                                      style={{ backgroundColor: color?.value ?? "#eee" }}
+                                      title={color?.name}
+                                    />
+                                    <span className="text-custom-sm text-dark">{color?.name ?? "—"}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
-                      {availableSizes.length > 0 && (
-                        <div className="flex items-center gap-4">
-                          <div className="min-w-[65px]">
-                            <h4 className="font-medium text-dark">Size:</h4>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {availableSizes.map((size) => (
-                              <label
-                                key={size}
-                                htmlFor={`size-${size}`}
-                                className="flex cursor-pointer select-none items-center"
-                              >
-                                <input
-                                  type="radio"
-                                  name="size"
-                                  id={`size-${size}`}
-                                  className="sr-only"
-                                  checked={activeSize === size}
-                                  onChange={() => setActiveSize(size)}
-                                />
-                                <span
-                                  className={`inline-flex items-center justify-center min-w-[2.5rem] py-2 px-3 rounded-md border text-custom-sm font-medium ${activeSize === size
-                                    ? "border-blue bg-blue text-white"
-                                    : "border-gray-3 text-dark hover:border-blue"
-                                    }`}
-                                >
-                                  {size}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                          {availableSizes.length > 0 && (
+                            <div className="flex items-center gap-4">
+                              <div className="min-w-[65px]">
+                                <h4 className="font-medium text-dark">Size:</h4>
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {availableSizes.map((size) => (
+                                  <label
+                                    key={size}
+                                    htmlFor={`size-${size}`}
+                                    className="flex cursor-pointer select-none items-center"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="size"
+                                      id={`size-${size}`}
+                                      className="sr-only"
+                                      checked={activeSize === size}
+                                      onChange={() => setActiveSize(size)}
+                                    />
+                                    <span
+                                      className={`inline-flex items-center justify-center min-w-[2.5rem] py-2 px-3 rounded-md border text-custom-sm font-medium ${activeSize === size
+                                        ? "border-blue bg-blue text-white"
+                                        : "border-gray-3 text-dark hover:border-blue"
+                                        }`}
+                                    >
+                                      {size}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -411,16 +475,23 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
                         )}
                       </div>
 
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (hasSizeVariants && activeSizeVariantIdx === null) return;
                           handleAddToCart();
                         }}
-                        className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+                        disabled={hasSizeVariants && activeSizeVariantIdx === null}
+                        className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark ${
+                          hasSizeVariants && activeSizeVariantIdx === null
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
                       >
-                        Add to Cart
-                      </a>
+                        {hasSizeVariants && activeSizeVariantIdx === null
+                          ? "Choose a variant"
+                          : "Add to Cart"}
+                      </button>
 
                       <button
                         type="button"

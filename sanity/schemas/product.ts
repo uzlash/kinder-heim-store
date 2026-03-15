@@ -91,11 +91,52 @@ export default defineType({
       initialValue: 0,
     }),
     defineField({
+      name: 'sizeVariants',
+      title: 'Size / variant pricing',
+      type: 'array',
+      description: 'Use this for products with different prices per size or variant (e.g. "27cm → ₦28,500", "4 layers → ₦12,000"). Leave empty for standard products that use a single price.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'label',
+              title: 'Label',
+              type: 'string',
+              description: 'e.g. 27cm, 30cm, 4 layers, 500ml, Large set',
+              validation: (Rule: any) => Rule.required(),
+            },
+            {
+              name: 'price',
+              title: 'Price (₦)',
+              type: 'number',
+              validation: (Rule: any) => Rule.required().min(0),
+            },
+            {
+              name: 'comparePrice',
+              title: 'Compare at price (₦)',
+              type: 'number',
+              description: 'Optional original price to show a discount',
+              validation: (Rule: any) => Rule.min(0),
+            },
+          ],
+          preview: {
+            select: { label: 'label', price: 'price' },
+            prepare({ label, price }: { label?: string; price?: number }) {
+              return {
+                title: label || 'Unnamed variant',
+                subtitle: price != null ? `₦${price.toLocaleString()}` : '',
+              }
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: 'colorVariants',
       title: 'Colors & sizes',
       type: 'array',
-      description: 'Add each color and select which sizes are available for that color. For a color with all sizes, select every size option.',
-      validation: (Rule) => Rule.required().min(1),
+      description: 'Optional. Add each color and select which sizes are available for that color. Leave empty for products that use Size / variant pricing or a single price only.',
       of: [
         {
           type: 'object',
@@ -114,12 +155,13 @@ export default defineType({
               of: [{ type: 'string' }],
               options: {
                 list: [
-                  { title: 'XS', value: 'XS' },
-                  { title: 'S', value: 'S' },
-                  { title: 'M', value: 'M' },
-                  { title: 'L', value: 'L' },
-                  { title: 'XL', value: 'XL' },
-                  { title: 'XXL', value: 'XXL' },
+                  { title: '10', value: '10' },
+                  { title: '11', value: '11' },
+                  { title: '12', value: '12' },
+                  { title: '13', value: '13' },
+                  { title: '14', value: '14' },
+                  { title: '15', value: '15' },
+                  { title: '16', value: '16' },
                 ],
               },
             },
@@ -177,12 +219,6 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'bestSeller',
-      title: 'Best Seller',
-      type: 'boolean',
-      initialValue: false,
-    }),
-    defineField({
       name: 'newArrival',
       title: 'New Arrival',
       type: 'boolean',
@@ -201,19 +237,6 @@ export default defineType({
       },
       validation: (Rule) => Rule.required(),
       initialValue: 'active',
-    }),
-    defineField({
-      name: 'reviews',
-      title: 'Review Count',
-      type: 'number',
-      initialValue: 0,
-    }),
-    defineField({
-      name: 'rating',
-      title: 'Average Rating',
-      type: 'number',
-      validation: (Rule) => Rule.min(0).max(5),
-      initialValue: 0,
     }),
   ],
   preview: {

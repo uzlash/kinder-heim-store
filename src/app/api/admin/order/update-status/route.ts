@@ -33,9 +33,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify the document exists and is an order before patching
-    const existing = await clientWithToken.fetch<{ _id: string } | null>(
-      `*[_type == "order" && _id == $orderId][0]{ _id }`,
+    // Verify the document exists and is an order, and get current status + items for inventory restore
+    const existing = await clientWithToken.fetch<{
+      _id: string
+      status: string
+      items?: Array<{ product: { _ref: string } | null; quantity: number }>
+    } | null>(
+      `*[_type == "order" && _id == $orderId][0]{ _id, status, "items": items[] { "product": product { _ref }, quantity } }`,
       { orderId }
     )
     if (!existing) {
@@ -45,10 +49,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const previousStatus = existing.status
+
     await clientWithToken
       .patch(orderId)
       .set({ status })
       .commit()
+
+    // When cancelling: restore inventory for each order item (stock was decremented on order create)
+    if (status === 'cancelled' && previousStatus !== 'cancelled' && existing.items?.length) {
+      for (const orderItem of existing.items) {
+        const productRef = orderItem?.product?._ref
+        const qty = Number(orderItem?.quantity) || 0
+        if (productRef && qty > 0) {
+          await clientWithToken
+            .patch(productRef)
+            .inc({ inventory: qty })
+            .commit()
+        }
+      }
+    }
 
     // Here you would typically trigger an email notification
     // await sendOrderStatusEmail(orderId, status)

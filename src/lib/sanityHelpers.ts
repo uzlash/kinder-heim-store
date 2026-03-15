@@ -17,7 +17,6 @@ export function sanityProductToProduct(sanityProduct: SanityProduct): Product {
     title: sanityProduct.name,
     description: sanityProduct.description,
     slug: sanityProduct.slug,
-    reviews: sanityProduct.reviews || 0,
     price: sanityProduct.comparePrice || sanityProduct.price,
     discountedPrice: sanityProduct.price,
     imgs: {
@@ -27,6 +26,7 @@ export function sanityProductToProduct(sanityProduct: SanityProduct): Product {
     colors: sanityProduct.colorVariants?.map((v) => v.color) ?? [],
     sizes: sanityProduct.colorVariants?.[0]?.sizes ?? [],
     colorVariants: sanityProduct.colorVariants,
+    sizeVariants: sanityProduct.sizeVariants,
     productOfMonth: !!sanityProduct.productOfMonth,
     policy: sanityProduct.policy,
     deliveryInfo: sanityProduct.deliveryInfo,

@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatPrice } from "@/lib/formatPrice";
 import { useBrand } from "@/app/context/BrandContext";
+import { useSiteSettings } from "@/app/context/SiteSettingsContext";
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,6 +29,7 @@ const Header = () => {
   const pathname = usePathname();
   const { brand, isHeim, isKinder } = useBrand();
   const { data: session } = useSession();
+  const { contactPhone } = useSiteSettings();
 
   const brandPrefix = brand ? `/${brand}` : "";
 
@@ -416,6 +418,22 @@ const Header = () => {
                         menuItem={menuItem}
                         stickyMenu={stickyMenu}
                       />
+                    ) : menuItem.title === "Contact" && contactPhone ? (
+                      <li
+                        key={i}
+                        className={`group relative before:w-0 before:h-[3px] ${beforeBgAccentColor} before:absolute before:left-0 before:top-0 before:rounded-b-[3px] before:ease-out before:duration-200 hover:before:w-full`}
+                      >
+                        <a
+                          href={`https://wa.me/${contactPhone.replace(/\D/g, "")}?text=${encodeURIComponent("Hello, I'd like to get in touch.")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${hoverAccentColor} text-custom-sm font-medium text-dark flex ${
+                            stickyMenu ? "xl:py-4" : "xl:py-6"
+                          }`}
+                        >
+                          {menuItem.title}
+                        </a>
+                      </li>
                     ) : (
                       <li
                         key={i}

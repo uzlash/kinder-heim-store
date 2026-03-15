@@ -20,6 +20,7 @@ import ScrollToTop from "@/components/Common/ScrollToTop";
 import PreLoader from "@/components/Common/PreLoader";
 import SessionProvider from "@/components/Providers/SessionProvider";
 import { BrandProvider } from "../context/BrandContext";
+import { SiteSettingsProvider } from "../context/SiteSettingsContext";
 
 export default function RootLayout({
   children,
@@ -43,6 +44,7 @@ export default function RootLayout({
           <>
             <SessionProvider>
               <BrandProvider>
+                <SiteSettingsProvider>
                 <ReduxProvider>
                   <CartModalProvider>
                     <ModalProvider>
@@ -55,15 +57,16 @@ export default function RootLayout({
                           <AddToCartModal />
                           <CartSidebarModal />
                           <PreviewSliderModal />
+                          {!isLandingPage && <Footer />}
                         </PreviewSliderProvider>
                       </AddToCartModalProvider>
                     </ModalProvider>
                   </CartModalProvider>
                 </ReduxProvider>
+                </SiteSettingsProvider>
               </BrandProvider>
             </SessionProvider>
             <ScrollToTop />
-            {!isLandingPage && <Footer />}
           </>
         )}
       </body>

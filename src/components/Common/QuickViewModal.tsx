@@ -1,14 +1,25 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 import { useModalContext } from "@/app/context/QuickViewModalContext";
+import { useBrand } from "@/app/context/BrandContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addItemToCart, type CartItem } from "@/redux/features/cart-slice";
+import { selectCartItems } from "@/redux/features/cart-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { formatPrice } from "@/lib/formatPrice";
+
+function cartQtyForVariant(cartItems: CartItem[], product: { id?: string | number; slug?: string; color?: string; size?: string }): number {
+  const id = product.id ?? product.slug;
+  if (id == null) return 0;
+  const item = cartItems.find(
+    (i) => (i.slug ? i.slug === product.slug : i.id === id) && (i.color ?? "") === (product.color ?? "") && (i.size ?? "") === (product.size ?? "")
+  );
+  return item?.quantity ?? 0;
+}
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
@@ -18,15 +29,27 @@ const QuickViewModal = () => {
   const [activeSize, setActiveSize] = useState("");
 
   const dispatch = useDispatch<AppDispatch>();
+  const cartItems = useAppSelector(selectCartItems);
+  const { brand } = useBrand();
 
   const product = useAppSelector((state) => state.quickViewReducer.value);
   const [activePreview, setActivePreview] = useState(0);
 
-  const colorOptions = product?.colorVariants?.map((v) => v.color) ?? [];
-  const availableSizes = product?.colorVariants?.[activeColorKey]?.sizes ?? [];
+  const variantsWithColor = product?.colorVariants?.filter((v) => v?.color) ?? [];
+  const colorOptions = variantsWithColor.map((v) => v.color);
+  const availableSizes = variantsWithColor[activeColorKey]?.sizes ?? [];
   const selectedColorName = colorOptions[activeColorKey]?.name;
   const needsSize = availableSizes.length > 0;
-  const canAdd = !needsSize || activeSize.length > 0;
+
+  const payloadForCart = useMemo(
+    () => (product ? { ...product, quantity: 1, color: selectedColorName, size: activeSize || undefined } : null),
+    [product, selectedColorName, activeSize]
+  );
+  const cartQty = payloadForCart ? cartQtyForVariant(cartItems, payloadForCart) : 0;
+  const productStock = typeof product?.stock === "number" ? product.stock : null;
+  const maxQuantity = productStock != null ? Math.max(0, productStock - cartQty) : null;
+
+  const canAdd = (!needsSize || activeSize.length > 0) && (maxQuantity === null || maxQuantity > 0);
 
   const handlePreviewSlider = () => {
     const images = product?.imgs?.previews?.length ? product.imgs.previews : (product?.imgs?.thumbnails ?? []);
@@ -41,6 +64,7 @@ const QuickViewModal = () => {
         quantity,
         color: selectedColorName,
         size: activeSize || undefined,
+        brandSlug: brand ?? undefined,
       })
     );
     closeModal();
@@ -64,6 +88,10 @@ const QuickViewModal = () => {
       setActiveSize("");
     };
   }, [isModalOpen, closeModal]);
+
+  useEffect(() => {
+    if (maxQuantity != null && quantity > maxQuantity) setQuantity(maxQuantity);
+  }, [maxQuantity, quantity]);
 
   return (
     <div
@@ -221,9 +249,9 @@ const QuickViewModal = () => {
                         />
                         <span
                           className="w-4 h-4 rounded-full border border-gray-3 flex-shrink-0"
-                          style={{ backgroundColor: color.value || "#eee" }}
+                          style={{ backgroundColor: color?.value ?? "#eee" }}
                         />
-                        <span className="text-custom-sm text-dark">{color.name}</span>
+                        <span className="text-custom-sm text-dark">{color?.name ?? "—"}</span>
                       </label>
                     ))}
                   </div>
@@ -259,11 +287,13 @@ const QuickViewModal = () => {
 
                   <span className="flex items-center gap-2">
                     <span className="font-semibold text-dark text-xl xl:text-heading-4">
-                      ${formatPrice(product.discountedPrice)}
+                      ₦{formatPrice(product.discountedPrice)}
                     </span>
-                    <span className="font-medium text-dark-4 text-lg xl:text-2xl line-through">
-                      ${formatPrice(product.price)}
-                    </span>
+                    {product.price > product.discountedPrice && (
+                      <span className="font-medium text-dark-4 text-lg xl:text-2xl line-through">
+                        ₦{formatPrice(product.price)}
+                      </span>
+                    )}
                   </span>
                 </div>
 
@@ -272,12 +302,13 @@ const QuickViewModal = () => {
                     Quantity
                   </h4>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-3">
                     <button
-                      onClick={() => quantity > 1 && setQuantity(quantity - 1)}
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       aria-label="button for remove product"
                       className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue"
-                      disabled={quantity < 0 && true}
+                      disabled={quantity <= 1}
                     >
                       <svg
                         className="fill-current"
@@ -298,15 +329,15 @@ const QuickViewModal = () => {
 
                     <span
                       className="flex items-center justify-center w-20 h-10 rounded-[5px] border border-gray-4 bg-white font-medium text-dark"
-                      x-text="quantity"
                     >
                       {quantity}
                     </span>
 
                     <button
-                      onClick={() => setQuantity(quantity + 1)}
+                      onClick={() => setQuantity((q) => (maxQuantity != null ? Math.min(maxQuantity, q + 1) : q + 1))}
                       aria-label="button for add product"
-                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue"
+                      disabled={maxQuantity != null && quantity >= maxQuantity}
+                      className="flex items-center justify-center w-10 h-10 rounded-[5px] bg-gray-2 text-dark ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg
                         className="fill-current"
@@ -331,6 +362,12 @@ const QuickViewModal = () => {
                       </svg>
                     </button>
                   </div>
+                    {maxQuantity != null && (
+                      <p className="text-custom-sm text-dark-4 w-full">
+                        {maxQuantity === 0 ? "Out of stock" : `Max ${maxQuantity} available${cartQty > 0 ? ` (${cartQty} in cart)` : ""}`}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -340,7 +377,7 @@ const QuickViewModal = () => {
                   onClick={() => handleAddToCart()}
                   className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {!canAdd && needsSize ? "Choose a size" : "Add to Cart"}
+                  {!canAdd && needsSize ? "Choose a size/variant" : "Add to Cart"}
                 </button>
 
                 <button

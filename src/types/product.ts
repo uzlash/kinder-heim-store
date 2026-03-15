@@ -1,7 +1,6 @@
 export type Product = {
   title: string;
   description?: string;
-  reviews: number;
   price: number;
   discountedPrice: number;
   id: string | number;
@@ -13,6 +12,8 @@ export type Product = {
   colors?: Array<{ name: string; value: string }>;
   sizes?: string[];
   colorVariants?: Array<{ color: { name: string; value: string }; sizes: string[] }>;
+  /** Per-variant pricing (HEIM-style). When present, drives the price selector instead of colorVariants. */
+  sizeVariants?: Array<{ label: string; price: number; comparePrice?: number }>;
   productOfMonth?: boolean;
   policy?: string;
   deliveryInfo?: string;

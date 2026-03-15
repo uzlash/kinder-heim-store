@@ -9,11 +9,17 @@ export const metadata: Metadata = {
 };
 
 const CheckoutPage = async () => {
-  const siteSettings = await getSiteSettings();
+  const [heimSettings, kinderSettings] = await Promise.all([
+    getSiteSettings("heim"),
+    getSiteSettings("kinder"),
+  ]);
 
   return (
     <main>
-      <Checkout siteContactPhone={siteSettings?.contactPhone} />
+      <Checkout
+        contactPhoneHeim={heimSettings?.contactPhone ?? null}
+        contactPhoneKinder={kinderSettings?.contactPhone ?? null}
+      />
     </main>
   );
 };

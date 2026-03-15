@@ -32,9 +32,9 @@ export async function getAllProducts(brandSlug?: string) {
       sku,
       inventory,
       "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
       tags,
       featured,
-      bestSeller,
       newArrival,
       status,
       reviews,
@@ -70,12 +70,12 @@ export async function getProductBySlug(slug: string, brandSlug?: string) {
       sku,
       inventory,
       "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
       productOfMonth,
       policy,
       deliveryInfo,
       tags,
       featured,
-      bestSeller,
       newArrival,
       status,
       reviews,
@@ -105,34 +105,7 @@ export async function getFeaturedProducts(limit = 8, brandSlug?: string) {
       images,
       inventory,
       "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
-      productOfMonth,
-      reviews,
-      rating,
-      brand->{
-        _id,
-        name,
-        "slug": slug.current
-      }
-    }`,
-    params,
-  )
-}
-
-export async function getBestSellerProducts(limit = 8, brandSlug?: string) {
-  const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
-  const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
-  const params = brandSlugs?.length ? { brandSlugs } : {}
-
-  return client.fetch(
-    `*[_type == "product" && bestSeller == true && status == "active"${brandFilter}] | order(_createdAt desc) [0...${limit}] {
-      _id,
-      name,
-      "slug": slug.current,
-      price,
-      comparePrice,
-      images,
-      inventory,
-      "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
       productOfMonth,
       reviews,
       rating,
@@ -161,6 +134,7 @@ export async function getNewArrivalProducts(limit = 8, brandSlug?: string) {
       images,
       inventory,
       "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
       productOfMonth,
       reviews,
       rating,
@@ -394,10 +368,10 @@ export async function getFilteredProducts(filters: {
       sku,
       inventory,
       "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
       productOfMonth,
       tags,
       featured,
-      bestSeller,
       newArrival,
       status,
       reviews,
@@ -440,26 +414,37 @@ export async function getCustomerOrders(email: string) {
   )
 }
 
+const SITE_SETTINGS_PROJECTION = `{
+  storeName,
+  logo,
+  contactEmail,
+  contactPhone,
+  address,
+  bankTransferDetails,
+  pickupLocations,
+  shippingMethods,
+  taxRate,
+  currency
+}`
+
 export async function getSiteSettings(brandSlug?: string) {
   const brandSlugs = brandSlug ? getBrandSlugsForQuery(brandSlug) : null
   const brandFilter = brandSlugs?.length ? ' && brand->slug.current in $brandSlugs' : ''
   const params = brandSlugs?.length ? { brandSlugs } : {}
 
-  return client.fetch(
-    `*[_type == "siteSettings"${brandFilter}][0] {
-      storeName,
-      logo,
-      contactEmail,
-      contactPhone,
-      address,
-      bankTransferDetails,
-      pickupLocations,
-      shippingMethods,
-      taxRate,
-      currency
-    }`,
+  let settings = await client.fetch(
+    `*[_type == "siteSettings"${brandFilter}][0] ${SITE_SETTINGS_PROJECTION}`,
     params,
   )
+
+  // Fallback: if no brand-specific settings (e.g. brand not set on the doc), use first available
+  if (!settings && brandSlug) {
+    settings = await client.fetch(
+      `*[_type == "siteSettings"][0] ${SITE_SETTINGS_PROJECTION}`,
+    )
+  }
+
+  return settings
 }
 
 export async function getTestimonials(brandSlug?: string) {
@@ -497,10 +482,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -518,10 +503,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -539,10 +524,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -560,10 +545,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -581,10 +566,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -602,10 +587,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,
@@ -623,10 +608,10 @@ export async function getHomePageHero(brandSlug?: string) {
         sku,
         inventory,
         "colorVariants": colorVariants[]{ color->{ name, value }, sizes },
+      "sizeVariants": sizeVariants[]{ label, price, comparePrice },
         productOfMonth,
         tags,
         featured,
-        bestSeller,
         newArrival,
         status,
         reviews,

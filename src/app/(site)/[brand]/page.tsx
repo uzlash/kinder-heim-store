@@ -2,7 +2,6 @@ import Home from "@/components/Home";
 import { Metadata } from "next";
 import {
   getNewArrivalProducts,
-  getBestSellerProducts,
   getFeaturedProducts,
   getAllCategories,
   getTestimonials,
@@ -40,10 +39,9 @@ export default async function BrandHomePage({ params }: Props) {
   const { brand } = await params;
   const brandSlug = brand;
 
-  const [newArrivals, bestSellers, featured, categories, testimonials, heroData] =
+  const [newArrivals, featured, categories, testimonials, heroData] =
     await Promise.all([
       getNewArrivalProducts(8, brandSlug),
-      getBestSellerProducts(6, brandSlug),
       getFeaturedProducts(8, brandSlug),
       getAllCategories(brandSlug),
       getTestimonials(brandSlug),
@@ -51,7 +49,6 @@ export default async function BrandHomePage({ params }: Props) {
     ]);
 
   const newArrivalProducts = sanityProductsToProducts(newArrivals || []);
-  const bestSellerProducts = sanityProductsToProducts(bestSellers || []);
   const featuredProducts = sanityProductsToProducts(featured || []);
   const allCategories = sanityCategoriesToCategories(categories || []);
   const allTestimonials = sanityTestimonialsToTestimonials(testimonials || []);
@@ -83,7 +80,6 @@ export default async function BrandHomePage({ params }: Props) {
   return (
     <Home
       newArrivals={newArrivalProducts}
-      bestSellers={bestSellerProducts}
       featured={featuredProducts}
       categories={allCategories}
       testimonials={allTestimonials}

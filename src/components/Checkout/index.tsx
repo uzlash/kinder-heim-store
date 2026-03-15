@@ -23,11 +23,13 @@ import { useBrand } from "@/app/context/BrandContext";
 const DEFAULT_INTERSTATE_ZONE = INTERSTATE_ZONES[0]?.value ?? "northwest";
 
 interface CheckoutProps {
-  /** Site contact phone for Order via WhatsApp link (from Sanity site settings). */
-  siteContactPhone?: string | null;
+  /** HEIM brand contact phone for Order via WhatsApp. */
+  contactPhoneHeim?: string | null;
+  /** Kinder brand contact phone for Order via WhatsApp. Mixed cart or Kinder-only uses this. */
+  contactPhoneKinder?: string | null;
 }
 
-const Checkout = ({ siteContactPhone }: CheckoutProps) => {
+const Checkout = ({ contactPhoneHeim, contactPhoneKinder }: CheckoutProps) => {
   const [shippingMethod, setShippingMethod] = useState<DeliveryOption>("store_pickup");
   const [interstateZone, setInterstateZone] = useState(DEFAULT_INTERSTATE_ZONE);
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,15 @@ const Checkout = ({ siteContactPhone }: CheckoutProps) => {
     return `Hello! I'd like to order:\n${lines.join("\n")}\n\nTotal: ₦${formatPrice(total)}`;
   }, [cartItems, total]);
 
-  const phoneDigits = siteContactPhone?.replace(/\D/g, "") ?? "";
+  // Brand-aware Order via WhatsApp: HEIM-only → HEIM contact; mixed or Kinder-only → Kinder contact
+  const orderViaWhatsAppPhone = useMemo(() => {
+    const hasHeim = cartItems.some((item) => item.brandSlug === "heim");
+    const hasKinder = cartItems.some((item) => item.brandSlug === "kinder");
+    if (hasHeim && !hasKinder && contactPhoneHeim) return contactPhoneHeim;
+    return contactPhoneKinder ?? contactPhoneHeim ?? null;
+  }, [cartItems, contactPhoneHeim, contactPhoneKinder]);
+
+  const phoneDigits = orderViaWhatsAppPhone?.replace(/\D/g, "") ?? "";
   const orderViaWhatsAppHref =
     phoneDigits && orderMessage
       ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(orderMessage)}`
