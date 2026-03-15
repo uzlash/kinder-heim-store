@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
@@ -9,6 +9,8 @@ import { useAppSelector } from "@/redux/store";
 import { Product } from "@/types/product";
 import { useDispatch } from "react-redux";
 import { addItemToCart } from "@/redux/features/cart-slice";
+import { selectCartItems } from "@/redux/features/cart-slice";
+import type { CartItem } from "@/redux/features/cart-slice";
 import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
 import { formatPrice } from "@/lib/formatPrice";
@@ -21,9 +23,19 @@ interface ShopDetailsProps {
 
 const DEFAULT_DELIVERY = "24 hrs max within Abuja. Saturdays for interstate deliveries.";
 
+function cartQtyForVariant(cartItems: CartItem[], product: { id?: string | number; slug?: string; color?: string; size?: string }): number {
+  const id = product.id ?? product.slug;
+  if (id == null) return 0;
+  const item = cartItems.find(
+    (i) => (i.slug ? i.slug === product.slug : i.id === id) && (i.color ?? "") === (product.color ?? "") && (i.size ?? "") === (product.size ?? "")
+  );
+  return item?.quantity ?? 0;
+}
+
 const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsProps) => {
   const { openPreviewModal } = usePreviewSlider();
   const { brand } = useBrand();
+  const cartItems = useAppSelector(selectCartItems);
   const [previewImg, setPreviewImg] = useState(0);
   const dispatch = useDispatch();
   const [quantity, setQuantity] = useState(1);
@@ -56,14 +68,31 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
     hasSizeVariants && activeSizeVariantIdx !== null
       ? product!.sizeVariants![activeSizeVariantIdx]
       : null;
+  const selectedColorName = colorOptions[activeColorKey]?.name ?? undefined;
+
+  // Cart-aware max quantity (same as AddToCartModal / QuickViewModal)
+  const payloadForCart = useMemo(() => {
+    if (!product) return null;
+    if (hasSizeVariants && activeSizeVariantIdx !== null) {
+      return { ...product, quantity: 1, size: product.sizeVariants![activeSizeVariantIdx].label, color: undefined as string | undefined };
+    }
+    return { ...product, quantity: 1, color: selectedColorName, size: activeSize || undefined };
+  }, [product, hasSizeVariants, activeSizeVariantIdx, selectedColorName, activeSize]);
+
+  const cartQty = payloadForCart ? cartQtyForVariant(cartItems, payloadForCart) : 0;
+  const rawStock = product?.stock as unknown as number | string | null | undefined;
+  const parsedStock =
+    rawStock === null || rawStock === undefined ? null : Number(rawStock);
+  const productStock =
+    parsedStock !== null && Number.isFinite(parsedStock) ? parsedStock : null;
+  const maxQuantity = productStock != null ? Math.max(0, productStock - cartQty) : null;
+  const atMax = maxQuantity != null ? quantity >= maxQuantity : false;
 
   // Effective price for display and WhatsApp message
   const effectivePrice = activeSizeVariant?.price ?? product?.discountedPrice ?? 0;
   const effectiveComparePrice = activeSizeVariant?.comparePrice ?? product?.price ?? 0;
 
   const deliveryText = product?.deliveryInfo ?? DEFAULT_DELIVERY;
-  const maxStock = product?.stock ?? Infinity;
-  const atMax = quantity >= maxStock;
   const whatsappNumber = siteContactPhone?.trim();
   const phoneDigits = whatsappNumber?.replace(/\D/g, "") ?? "";
   const lineTotal = effectivePrice * quantity;
@@ -84,15 +113,16 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
     }
   }, [product, initialProduct, dispatch]);
 
-  // Clamp quantity to max stock when product or stock changes
+  // Clamp quantity to available stock (cart-aware) when product, cart, or selection changes
   useEffect(() => {
-    if (typeof product?.stock === "number" && quantity > product.stock) {
-      setQuantity(product.stock);
+    if (maxQuantity != null && quantity > maxQuantity) {
+      setQuantity(maxQuantity);
     }
-  }, [product?.stock, quantity]);
+  }, [maxQuantity, quantity]);
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (maxQuantity != null && maxQuantity <= 0) return;
     if (hasSizeVariants) {
       dispatch(
         addItemToCart({
@@ -106,7 +136,6 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
         })
       );
     } else {
-      const selectedColorName = colorOptions[activeColorKey]?.name ?? undefined;
       dispatch(
         addItemToCart({
           ...product,
@@ -248,31 +277,50 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
                   <div className="flex flex-wrap items-center gap-5.5 mb-4.5">
                     <div className="flex items-center gap-1.5">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <g clipPath="url(#clip0_375_9221)">
-                          <path
-                            d="M10 0.5625C4.78125 0.5625 0.5625 4.78125 0.5625 10C0.5625 15.2188 4.78125 19.4688 10 19.4688C15.2188 19.4688 19.4688 15.2188 19.4688 10C19.4688 4.78125 15.2188 0.5625 10 0.5625ZM10 18.0625C5.5625 18.0625 1.96875 14.4375 1.96875 10C1.96875 5.5625 5.5625 1.96875 10 1.96875C14.4375 1.96875 18.0625 5.59375 18.0625 10.0312C18.0625 14.4375 14.4375 18.0625 10 18.0625Z"
-                            fill="#22AD5C"
-                          />
-                          <path
-                            d="M12.6875 7.09374L8.9688 10.7187L7.2813 9.06249C7.00005 8.78124 6.56255 8.81249 6.2813 9.06249C6.00005 9.34374 6.0313 9.78124 6.2813 10.0625L8.2813 12C8.4688 12.1875 8.7188 12.2812 8.9688 12.2812C9.2188 12.2812 9.4688 12.1875 9.6563 12L13.6875 8.12499C13.9688 7.84374 13.9688 7.40624 13.6875 7.12499C13.4063 6.84374 12.9688 6.84374 12.6875 7.09374Z"
-                            fill="#22AD5C"
-                          />
-                        </g>
-                        <defs>
-                          <clipPath id="clip0_375_9221">
-                            <rect width="20" height="20" fill="white" />
-                          </clipPath>
-                        </defs>
-                      </svg>
-
-                      <span className="text-green"> In Stock </span>
+                      {maxQuantity != null && maxQuantity === 0 ? (
+                        <>
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden
+                          >
+                            <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          <span className="text-gray-5">Out of stock</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden
+                          >
+                            <g clipPath="url(#clip0_375_9221)">
+                              <path
+                                d="M10 0.5625C4.78125 0.5625 0.5625 4.78125 0.5625 10C0.5625 15.2188 4.78125 19.4688 10 19.4688C15.2188 19.4688 19.4688 15.2188 19.4688 10C19.4688 4.78125 15.2188 0.5625 10 0.5625ZM10 18.0625C5.5625 18.0625 1.96875 14.4375 1.96875 10C1.96875 5.5625 5.5625 1.96875 10 1.96875C14.4375 1.96875 18.0625 5.59375 18.0625 10.0312C18.0625 14.4375 14.4375 18.0625 10 18.0625Z"
+                                fill="#22AD5C"
+                              />
+                              <path
+                                d="M12.6875 7.09374L8.9688 10.7187L7.2813 9.06249C7.00005 8.78124 6.56255 8.81249 6.2813 9.06249C6.00005 9.34374 6.0313 9.78124 6.2813 10.0625L8.2813 12C8.4688 12.1875 8.7188 12.2812 8.9688 12.2812C9.2188 12.2812 9.4688 12.1875 9.6563 12L13.6875 8.12499C13.9688 7.84374 13.9688 7.40624 13.6875 7.12499C13.4063 6.84374 12.9688 6.84374 12.6875 7.09374Z"
+                                fill="#22AD5C"
+                              />
+                            </g>
+                            <defs>
+                              <clipPath id="clip0_375_9221">
+                                <rect width="20" height="20" fill="white" />
+                              </clipPath>
+                            </defs>
+                          </svg>
+                          <span className="text-green">In Stock</span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -444,10 +492,10 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
 
                           <button
                             type="button"
-                            onClick={() => !atMax && setQuantity(quantity + 1)}
+                            onClick={() => setQuantity((q) => (maxQuantity != null ? Math.min(maxQuantity, q + 1) : q + 1))}
                             aria-label="Increase quantity"
                             className="flex items-center justify-center w-12 h-12 ease-out duration-200 hover:text-blue disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={atMax}
+                            disabled={atMax || (maxQuantity != null && maxQuantity <= 0)}
                           >
                           <svg
                             className="fill-current"
@@ -468,9 +516,11 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
                           </svg>
                         </button>
                         </div>
-                        {typeof product?.stock === "number" && (
+                        {maxQuantity != null && (
                           <p className="text-custom-sm text-gray-5">
-                            Max {product.stock} in stock
+                            {maxQuantity === 0
+                              ? "Out of stock"
+                              : `Max ${maxQuantity} available${cartQty > 0 ? ` (${cartQty} in cart)` : ""}`}
                           </p>
                         )}
                       </div>
@@ -478,19 +528,26 @@ const ShopDetails = ({ product: initialProduct, siteContactPhone }: ShopDetailsP
                       <button
                         type="button"
                         onClick={() => {
+                          if (maxQuantity != null && maxQuantity <= 0) return;
                           if (hasSizeVariants && activeSizeVariantIdx === null) return;
                           handleAddToCart();
                         }}
-                        disabled={hasSizeVariants && activeSizeVariantIdx === null}
+                        disabled={
+                          (maxQuantity != null && maxQuantity <= 0) ||
+                          (hasSizeVariants && activeSizeVariantIdx === null)
+                        }
                         className={`inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark ${
-                          hasSizeVariants && activeSizeVariantIdx === null
+                          (maxQuantity != null && maxQuantity <= 0) ||
+                          (hasSizeVariants && activeSizeVariantIdx === null)
                             ? "opacity-50 cursor-not-allowed"
                             : ""
                         }`}
                       >
-                        {hasSizeVariants && activeSizeVariantIdx === null
-                          ? "Choose a variant"
-                          : "Add to Cart"}
+                        {maxQuantity != null && maxQuantity <= 0
+                          ? "Out of stock"
+                          : hasSizeVariants && activeSizeVariantIdx === null
+                            ? "Choose a variant"
+                            : "Add to Cart"}
                       </button>
 
                       <button

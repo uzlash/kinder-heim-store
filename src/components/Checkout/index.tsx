@@ -183,7 +183,11 @@ const Checkout = ({ contactPhoneHeim, contactPhoneKinder }: CheckoutProps) => {
               <div className="lg:max-w-[670px] w-full">
                 {!session && <Login />}
 
-                <Billing />
+                <Billing
+                  key={session ? "logged-in" : "guest"}
+                  defaultFullName={session?.user?.name ?? undefined}
+                  defaultEmail={session?.user?.email ?? undefined}
+                />
 
                 <div className="bg-white shadow-1 rounded-[10px] p-4 sm:p-8.5 mt-7.5">
                   <div>
